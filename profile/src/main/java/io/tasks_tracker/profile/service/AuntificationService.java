@@ -20,7 +20,7 @@ import io.tasks_tracker.profile.dto.UpdatePasswordRequest;
 import io.tasks_tracker.profile.entity.Role;
 import io.tasks_tracker.profile.entity.User;
 import io.tasks_tracker.profile.enumeration.RoleEnum;
-import io.tasks_tracker.profile.exception.InvalidSignInForm;
+import io.tasks_tracker.profile.exception.InvalidPassword;
 import io.tasks_tracker.profile.exception.InvalidSignUpForm;
 import io.tasks_tracker.profile.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -73,8 +73,7 @@ public class AuntificationService
             HttpServletRequest request, 
             HttpServletResponse response,
             SignInRequest form
-    ) throws InvalidSignInForm
-    {
+    ) {
         Authentication authentication = authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken.unauthenticated(
                 form.getUsername(), form.getPassword()
@@ -97,7 +96,7 @@ public class AuntificationService
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         
         if(!passwordEncoder.matches(form.getOld_password(), user.getPassword())) {
-            throw new RuntimeException("Invalid password.");
+            throw new InvalidPassword();
         }
 
         user.setPassword(passwordEncoder.encode(form.getNew_password()));
@@ -107,6 +106,7 @@ public class AuntificationService
     public void logoutAll(Authentication authentication, HttpServletRequest request)
     {
         request.getSession().invalidate();
+        System.out.println(authentication);
         Query query = new Query(Criteria.where("principal").is(authentication.getName()));
         mongoTemplate.remove(query, "sessions");
     }

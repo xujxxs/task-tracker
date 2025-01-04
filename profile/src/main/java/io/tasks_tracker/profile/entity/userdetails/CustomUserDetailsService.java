@@ -1,6 +1,7 @@
 package io.tasks_tracker.profile.entity.userdetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,7 +20,11 @@ public class CustomUserDetailsService implements UserDetailsService
     throws UsernameNotFoundException
     {
         return userRepository.findByUsername(username)
-                    .map(CustomUserDetails::new)
+                    .map(user -> new User(
+                        user.getUsername(), 
+                        user.getPassword(), 
+                        user.getAuthorities()
+                    ))
                 .orElseThrow(() -> new UsernameNotFoundException(username + " not found."));
     }
 }

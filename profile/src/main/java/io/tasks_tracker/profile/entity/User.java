@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -25,6 +28,7 @@ import static jakarta.persistence.CascadeType.*;
 @Entity
 @Table(name = "users")
 @Data
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public class User implements Serializable
 {
     @Id
@@ -35,6 +39,7 @@ public class User implements Serializable
     @Column(nullable = false, unique = true)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false, unique = false)
     private String password;
 
@@ -50,6 +55,7 @@ public class User implements Serializable
     @Column(nullable = false, unique = false)
     private LocalDate birthDate;
 
+    @JsonIgnore
     @OneToMany(
         cascade = {PERSIST, MERGE, REMOVE},
         fetch = FetchType.EAGER, 

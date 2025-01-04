@@ -11,9 +11,8 @@ import org.springframework.session.data.mongo.config.annotation.web.http.EnableM
 @EnableMongoHttpSession(maxInactiveIntervalInSeconds = 60 * 60 * 24 * 2)
 public class MongoConfig
 {
-	@Bean
-    public JdkMongoSessionConverter jdkMongoSessionConverter() 
-    {
-        return new JdkMongoSessionConverter(Duration.ofMinutes(30));
-    }
+    @Bean
+	public JdkMongoSessionConverter jdkMongoSessionConverter() {
+		return new JdkMongoSessionConverter(Duration.ofMinutes(30)); 
+	}
 }
