@@ -1,0 +1,85 @@
+services:
+  profile:
+    build: 
+      context: ./profile
+    environment:
+      DB_HOST: profile-db
+      DB_PORT: 5432
+      DB_NAME: profile
+      DB_USERNAME: profileapp
+      DB_PASSWORD: profilepassword
+      SESSION_DB_HOST: session-db
+      SESSION_DB_PORT: 27017
+      SESSION_DB_NAME: session
+    depends_on:
+      - session-db
+      - profile-db
+    networks:
+      - tasks_tracker
+  
+  task:
+    build: 
+      context: ./task
+    environment:
+      DB_HOST: task-db
+      DB_PORT: 5432
+      DB_NAME: task
+      DB_USERNAME: taskapp
+      DB_PASSWORD: taskpassword
+      SESSION_DB_HOST: session-db
+      SESSION_DB_PORT: 27017
+      SESSION_DB_NAME: session
+    depends_on:
+      - session-db
+      - task-db
+    networks:
+      - tasks_tracker
+    
+  profile-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: profile
+      POSTGRES_USERNAME: profileapp
+      POSTGRES_PASSWORD: profilepassword
+    volumes:
+      - profile-db-data:/var/lib/postgresql/data
+    networks:
+      - tasks_tracker
+      
+  task-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: task
+      POSTGRES_USERNAME: taskapp
+      POSTGRES_PASSWORD: taskpassword
+    volumes:
+      - task-db-data:/var/lib/postgresql/data
+    networks:
+      - tasks_tracker
+      
+  session-db:
+    image: mongo:latest
+    volumes:
+      - session-db-data:/data/db/
+    networks:
+      - tasks_tracker
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - profile
+      - task
+    networks:
+      - tasks_tracker
+
+networks:
+  tasks_tracker:
+
+volumes:
+  profile-db-data:
+  task-db-data:
+  session-db-data:
