@@ -2,8 +2,6 @@ package io.tasks_tracker.profile.entity;
 
 import java.io.Serializable;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import io.tasks_tracker.profile.enumeration.RoleEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,11 +22,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public class Role implements Serializable
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = false, nullable = false)
