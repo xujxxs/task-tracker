@@ -20,6 +20,7 @@ import io.tasks_tracker.profile.dto.UpdatePasswordRequest;
 import io.tasks_tracker.profile.entity.Role;
 import io.tasks_tracker.profile.entity.User;
 import io.tasks_tracker.profile.enumeration.RoleEnum;
+import io.tasks_tracker.profile.exception.EmailUsedException;
 import io.tasks_tracker.profile.exception.InvalidPassword;
 import io.tasks_tracker.profile.exception.InvalidSignUpForm;
 import io.tasks_tracker.profile.repository.UserRepository;
@@ -51,18 +52,18 @@ public class AuntificationService
         }
 
 
-        if(userRepository.findByEmail(form.getEmail()).isPresent()){
-            throw new InvalidSignUpForm("Email is already registered");
+        if(userRepository.findByEmail(form.getUser_details().getEmail()).isPresent()){
+            throw new EmailUsedException();
         }
 
         User user = new User();
         user.setUsername(form.getUsername());
         user.setPassword(passwordEncoder.encode(form.getPassword()));
 
-        user.setFirstname(form.getFirstname());
-        user.setLastname(form.getLastname());
-        user.setEmail(form.getEmail());
-        user.setBirthDate(form.getBirth_date());
+        user.setFirstname(form.getUser_details().getFirstname());
+        user.setLastname(form.getUser_details().getLastname());
+        user.setEmail(form.getUser_details().getEmail());
+        user.setBirthDate(form.getUser_details().getBirth_date());
         
         user.addRole(new Role(RoleEnum.USER));
 
