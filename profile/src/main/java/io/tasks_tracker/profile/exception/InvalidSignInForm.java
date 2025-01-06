@@ -4,6 +4,6 @@ public class InvalidSignInForm extends RuntimeException
 {
     public InvalidSignInForm() 
     {
-        super("Invalid sign in form.");
+        super("Invalid signin form.");
     }
 }

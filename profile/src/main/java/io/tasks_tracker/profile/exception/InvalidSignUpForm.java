@@ -4,6 +4,6 @@ public class InvalidSignUpForm extends RuntimeException
 {
     public InvalidSignUpForm(String advanced) 
     {
-        super("Invalid sign in form: " + advanced + ".");
+        super("Invalid signup form: " + advanced + ".");
     }
 }
