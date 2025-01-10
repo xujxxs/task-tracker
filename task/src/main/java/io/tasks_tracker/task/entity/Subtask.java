@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -47,5 +49,6 @@ public class Subtask
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
     @JsonBackReference
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Task task;
 }

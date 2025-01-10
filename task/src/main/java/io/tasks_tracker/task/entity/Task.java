@@ -36,7 +36,7 @@ public class Task
     @Column(nullable = true)
     private String category;
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Subtask> subtasks;
     

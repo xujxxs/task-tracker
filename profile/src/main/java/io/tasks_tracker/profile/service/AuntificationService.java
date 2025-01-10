@@ -107,8 +107,12 @@ public class AuntificationService
     public void logoutAll(Authentication authentication, HttpServletRequest request)
     {
         request.getSession().invalidate();
-        System.out.println(authentication);
-        Query query = new Query(Criteria.where("principal").is(authentication.getName()));
+        deleteAllSessions(authentication.getName());
+    }
+
+    public void deleteAllSessions(String username)
+    {
+        Query query = new Query(Criteria.where("principal").is(username));
         mongoTemplate.remove(query, "sessions");
     }
 }

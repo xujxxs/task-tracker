@@ -11,9 +11,14 @@ services:
       SESSION_DB_HOST: session-db
       SESSION_DB_PORT: 27017
       SESSION_DB_NAME: session
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: profileapp
+      RABBITMQ_PASSWORD: profilepassword
     depends_on:
       - session-db
       - profile-db
+      - rabbitmq
     networks:
       - tasks_tracker
   
@@ -29,9 +34,14 @@ services:
       SESSION_DB_HOST: session-db
       SESSION_DB_PORT: 27017
       SESSION_DB_NAME: session
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: taskapp
+      RABBITMQ_PASSWORD: taskpassword
     depends_on:
       - session-db
       - task-db
+      - rabbitmq
     networks:
       - tasks_tracker
     
@@ -60,7 +70,18 @@ services:
   session-db:
     image: mongo:latest
     volumes:
-      - session-db-data:/data/db/
+      - session-db-data:/var/lib/mongodb/data
+    networks:
+      - tasks_tracker
+
+  rabbitmq:
+    image: rabbitmq:latest
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbituser
+      RABBITMQ_DEFAULT_PASS: rabbitpassword
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
     networks:
       - tasks_tracker
 
