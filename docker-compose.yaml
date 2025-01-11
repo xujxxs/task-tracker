@@ -52,6 +52,7 @@ services:
       POSTGRES_USERNAME: profileapp
       POSTGRES_PASSWORD: profilepassword
     volumes:
+      - ./init-scripts/profile-db-init.sql:/docker-entrypoint-initdb.d/profile-db-init.sql
       - profile-db-data:/var/lib/postgresql/data
     networks:
       - tasks_tracker
@@ -63,6 +64,7 @@ services:
       POSTGRES_USERNAME: taskapp
       POSTGRES_PASSWORD: taskpassword
     volumes:
+      - ./init-scripts/task-db-init.sql:/docker-entrypoint-initdb.d/task-db-init.sql
       - task-db-data:/var/lib/postgresql/data
     networks:
       - tasks_tracker
@@ -70,6 +72,7 @@ services:
   session-db:
     image: mongo:latest
     volumes:
+      - ./init-scripts/session-db-init.js:/docker-entrypoint-initdb.d/session-db-init.js
       - session-db-data:/var/lib/mongodb/data
     networks:
       - tasks_tracker
@@ -81,7 +84,9 @@ services:
       RABBITMQ_DEFAULT_USER: rabbituser
       RABBITMQ_DEFAULT_PASS: rabbitpassword
     volumes:
+      - ./rabbitmq-config/definitions.json:/etc/rabbitmq/definitions.json
       - ./rabbitmq:/var/lib/rabbitmq
+    command: rabbitmq-server --definitions /etc/rabbitmq/definitions.json
     networks:
       - tasks_tracker
 

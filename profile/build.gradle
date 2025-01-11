@@ -26,11 +26,11 @@ repositories {
 dependencies {  
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.session:spring-session-core'
 	implementation 'org.springframework.session:spring-session-data-mongodb'
-	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'jakarta.validation:jakarta.validation-api'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'

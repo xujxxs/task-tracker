@@ -1,0 +1,36 @@
+{
+    "users": [
+      {
+        "name": "profileapp",
+        "password": "profilepassword",
+        "tags": "administrator"
+      },
+      {
+        "name": "taskapp",
+        "password": "taskpassword",
+        "tags": "management"
+      }
+    ],
+    "vhosts": [
+      {
+        "name": "/"
+      }
+    ],
+    "permissions": [
+      {
+        "user": "profileapp",
+        "vhost": "/",
+        "configure": ".*",
+        "write": ".*",
+        "read": ".*"
+      },
+      {
+        "user": "taskapp",
+        "vhost": "/",
+        "configure": ".*",
+        "write": ".*",
+        "read": ".*"
+      }
+    ]
+  }
+  
