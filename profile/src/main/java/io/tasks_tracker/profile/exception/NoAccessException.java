@@ -2,8 +2,8 @@ package io.tasks_tracker.profile.exception;
 
 public class NoAccessException extends RuntimeException 
 {
-    public NoAccessException(String type, Long id) 
+    public NoAccessException(String type, String username) 
     {
-        super("No access to " + type + " with id: " + id.toString());
+        super("No access to " + type + " with username: " + username);
     }
 }
