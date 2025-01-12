@@ -48,7 +48,7 @@ public class AuntificationService
     public void signUp(SignUpRequest form) throws InvalidSignUpForm
     {
         if(userRepository.findByUsername(form.getUsername()).isPresent()){
-            throw new InvalidSignUpForm("Username is already used");
+            throw new InvalidSignUpForm("Username is already exist");
         }
 
 
