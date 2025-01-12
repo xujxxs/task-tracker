@@ -27,9 +27,9 @@ public class ProfileService
                     .anyMatch(role -> role.getAuthority().equals("ADMIN"));
     }
 
-    public User getProfile(Authentication authentication)
+    public User getProfile(String username)
     {
-        return userRepository.findByUsername(authentication.getName())
+        return userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 
@@ -37,7 +37,7 @@ public class ProfileService
             Authentication authentication,
             UpdateProfileRequest updateProfileRequest
     ) {
-        User user = getProfile(authentication);
+        User user = getProfile(authentication.getName());
 
         if(!user.getEmail().equals(updateProfileRequest.getEmail())
             && userRepository.findByEmail(updateProfileRequest.getEmail()).isPresent()) {
@@ -54,29 +54,27 @@ public class ProfileService
 
     public void deleteProfile(Authentication authentication)
     {
-        userRepository.delete(getProfile(authentication));
+        userRepository.delete(getProfile(authentication.getName()));
     }
 
-    public User getProfileById(
+    public User getProfileByUsername(
             Authentication authentication, 
-            Long userId
+            String username
     ) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found by id: " + String.valueOf(userId)));
+        User user = getProfile(username);
 
         if(!hasAccess(authentication, user)) {
-             throw new NoAccessException("user", userId);
+             throw new NoAccessException("user", username);
         }
         return user;
     }
 
-    public User updateProfileById(
+    public User updateProfileByUsername(
             Authentication authentication, 
-            Long userId,
+            String username,
             UpdateProfileRequest updateProfileRequest
     ) {
-        User user = getProfileById(authentication, userId);
-
+        User user = getProfileByUsername(authentication, username);
 
         if(!user.getEmail().equals(updateProfileRequest.getEmail())
             && userRepository.findByEmail(updateProfileRequest.getEmail()).isPresent()) {
@@ -91,11 +89,11 @@ public class ProfileService
         return userRepository.save(user);
     }
 
-    public void deleteProfileById(
+    public void deleteProfileByUsername(
             Authentication authentication, 
-            Long userId
+            String username
     ) {
-        User user = getProfileById(authentication, userId);
+        User user = getProfileByUsername(authentication, username);
         userRepository.delete(user);
     }
 }

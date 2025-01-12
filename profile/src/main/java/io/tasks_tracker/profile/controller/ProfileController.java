@@ -40,7 +40,7 @@ public class ProfileController
     {
         return ResponseEntity
                 .ok()
-                .body(profileService.getProfile(authentication));
+                .body(profileService.getProfile(authentication.getName()));
     }
     
     @PutMapping
@@ -66,34 +66,34 @@ public class ProfileController
                 .build();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getProfileById(
-            @PathVariable Long id,
+    @GetMapping("/{username}")
+    public ResponseEntity<User> getProfileByUsername(
+            @PathVariable String username,
             Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
-                .body(profileService.getProfileById(authentication, id));
+                .body(profileService.getProfileByUsername(authentication, username));
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateProfileById(
-            @PathVariable Long id,
+    @PutMapping("/{username}")
+    public ResponseEntity<User> updateProfileByUsername(
+            @PathVariable String username,
             @RequestBody UpdateProfileRequest entity,
             Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
-                .body(profileService.updateProfileById(authentication, id, entity));
+                .body(profileService.updateProfileByUsername(authentication, username, entity));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProfileById(
-            @PathVariable Long id,
+    @DeleteMapping("/{username}")
+    public ResponseEntity<?> deleteProfileByUsername(
+            @PathVariable String username,
             Authentication authentication,
             HttpServletRequest request
     ) {
-        User userToDelete = profileService.getProfileById(authentication, id);
+        User userToDelete = profileService.getProfileByUsername(authentication, username);
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.delete", userToDelete.getUsername());
         
         if(userToDelete.getUsername().equals(authentication.getName())) {
@@ -103,7 +103,7 @@ public class ProfileController
             auntificationService.deleteAllSessions(userToDelete.getUsername());
         }
 
-        profileService.deleteProfileById(authentication, id);
+        profileService.deleteProfileByUsername(authentication, username);
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
