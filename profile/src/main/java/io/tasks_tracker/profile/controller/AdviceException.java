@@ -37,7 +37,7 @@ public class AdviceException
     }
 
     @ExceptionHandler(InvalidSignUpForm.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     public String invalidSignUpForm(InvalidSignUpForm ex)
     {
         return ex.getMessage();
