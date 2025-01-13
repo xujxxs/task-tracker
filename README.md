@@ -51,7 +51,7 @@
 Зависимости которые используются в проекте.
 
 Для **profile** и **task**:
-- [Spring Web](https://docs.spring.io/spring-boot/reference/web/index.html) - Для создания RESTful веб-приложения с помощью Spring MVC. Использует Apache Tomcat в качестве встроенного контейнера по умолчанию.
+- [Spring Web](https://docs.spring.io/spring-boot/reference/web/index.html) - Для создания RESTful веб-приложения с помощью Spring MVC. Использует Apache Tomcat в качестве встроенного веб-сервера по умолчанию.
 - [Spring for RabbitMQ](https://docs.spring.io/spring-amqp/reference/) - Предоставляет общую платформу для отправки и получения сообщений между сервисами.
 - [Spring Data JPA](https://docs.spring.io/spring-data/jpa/reference/) - Хранение данных в SQL бд. 
 - [Spring Data MongoDB](https://docs.spring.io/spring-data/mongodb/reference/) - Хранение данных в NoSQL бд.
@@ -102,7 +102,7 @@
 - [x] Добавить **RabbitMQ** для межсервисного взаимодействия
 - [x] Добавить скрипты автоматической конфигурации **init-scripts**
 - [x] Сделать **README.md**
-- [ ] Добавить кеширование с помощью **Redis**
+- [x] Добавить кеширование с помощью **Redis**
 - [ ] Добавить хранение файлов для сервиса **profile** в облако
 - [ ] Реализовать сервис **notification**
 - [ ] Добавить **SSL/TLS**

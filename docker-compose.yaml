@@ -15,10 +15,13 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: profileapp
       RABBITMQ_PASSWORD: profilepassword
+      REDIS_HOST: profile-redis
+      REDIS_PORT: 6379
     depends_on:
       - session-db
       - profile-db
       - rabbitmq
+      - profile-redis
     networks:
       - tasks_tracker
   
@@ -38,10 +41,13 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: taskapp
       RABBITMQ_PASSWORD: taskpassword
+      REDIS_HOST: task-redis
+      REDIS_PORT: 6379
     depends_on:
       - session-db
       - task-db
       - rabbitmq
+      - task-redis
     networks:
       - tasks_tracker
     
@@ -73,7 +79,7 @@ services:
     image: mongo:latest
     volumes:
       - ./init-scripts/session-db-init.js:/docker-entrypoint-initdb.d/session-db-init.js
-      - session-db-data:/var/lib/mongodb/data
+      - session-db-data:/data/db
     networks:
       - tasks_tracker
 
@@ -84,9 +90,23 @@ services:
       RABBITMQ_DEFAULT_USER: rabbituser
       RABBITMQ_DEFAULT_PASS: rabbitpassword
     volumes:
-      - ./rabbitmq-config/definitions.json:/etc/rabbitmq/definitions.json
+      - ./init-scripts/definitions.json:/etc/rabbitmq/definitions.json
       - ./rabbitmq:/var/lib/rabbitmq
     command: rabbitmq-server --definitions /etc/rabbitmq/definitions.json
+    networks:
+      - tasks_tracker
+
+  profile-redis:
+    image: redis:latest
+    volumes:
+      - profile-redis-data:/data
+    networks:
+      - tasks_tracker
+
+  task-redis:
+    image: redis:latest
+    volumes:
+      - task-redis-data:/data
     networks:
       - tasks_tracker
 
@@ -109,3 +129,5 @@ volumes:
   profile-db-data:
   task-db-data:
   session-db-data:
+  profile-redis-data:
+  task-redis-data:

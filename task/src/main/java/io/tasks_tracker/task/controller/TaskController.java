@@ -95,7 +95,7 @@ public class TaskController
     ) {
         return ResponseEntity
                 .ok()
-                .body(taskService.getTaskById(authentication, id));
+                .body(taskService.getTask(authentication, id));
     }
     
     @PostMapping

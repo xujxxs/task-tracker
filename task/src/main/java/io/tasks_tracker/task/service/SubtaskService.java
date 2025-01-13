@@ -1,6 +1,9 @@
 package io.tasks_tracker.task.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,7 @@ public class SubtaskService
     @Autowired
     private TaskService taskService;
 
+    @Cacheable(value = "subtasks", key = "#id")
     public Subtask getSubtaskById(
             Authentication authentication,
             Long id
@@ -45,7 +49,7 @@ public class SubtaskService
         newSubtask.setCompleted(subtask.getSubtask().isCompleted());
         newSubtask.setCreatedBy(authentication.getName());
 
-        Task task = taskService.getTaskById( 
+        Task task = taskService.getTask( 
             authentication,
             subtask.getTaskId()
         );
@@ -56,6 +60,7 @@ public class SubtaskService
         return savedSubtask;
     }
 
+    @CachePut(value = "subtasks", key = "#id")
     public Subtask markSubtask(
             Long id, 
             boolean isCompleted, 
@@ -69,6 +74,7 @@ public class SubtaskService
         return subtaskRepository.save(subtask);
     }
 
+    @CachePut(value = "subtasks", key = "#id")
     public Subtask updateSubtask(
             Long id, 
             SubtaskRequest subtask, 
@@ -83,6 +89,7 @@ public class SubtaskService
         return subtaskRepository.save(updateSubtask);
     }
 
+    @CacheEvict(value = "subtasks", key = "#id")
     public void deleteSubtask(
             Long id, 
             Authentication authentication

@@ -1,5 +1,6 @@
 package io.tasks_tracker.task.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.ColumnDefault;
@@ -23,7 +24,7 @@ import lombok.Data;
 @Entity
 @Table
 @Data
-public class Subtask 
+public class Subtask implements Serializable
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

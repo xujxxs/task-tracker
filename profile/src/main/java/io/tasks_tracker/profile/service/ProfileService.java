@@ -1,6 +1,9 @@
 package io.tasks_tracker.profile.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -27,12 +30,14 @@ public class ProfileService
                     .anyMatch(role -> role.getAuthority().equals("ADMIN"));
     }
 
+    @Cacheable(value = "users", key = "#username")
     public User getProfile(String username)
     {
         return userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 
+    @CachePut(value = "users", key = "#authentication.name")
     public User updateProfile(
             Authentication authentication,
             UpdateProfileRequest updateProfileRequest
@@ -52,6 +57,7 @@ public class ProfileService
         return userRepository.save(user);
     }
 
+    @CacheEvict(value = "users", key = "#authentication.name")
     public void deleteProfile(Authentication authentication)
     {
         userRepository.delete(getProfile(authentication.getName()));
@@ -69,6 +75,7 @@ public class ProfileService
         return user;
     }
 
+    @CachePut(value = "users", key = "#username")
     public User updateProfileByUsername(
             Authentication authentication, 
             String username,
@@ -89,6 +96,7 @@ public class ProfileService
         return userRepository.save(user);
     }
 
+    @CacheEvict(value = "users", key = "#username")
     public void deleteProfileByUsername(
             Authentication authentication, 
             String username
