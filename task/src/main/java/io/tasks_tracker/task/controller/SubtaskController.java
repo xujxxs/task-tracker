@@ -3,6 +3,7 @@ package io.tasks_tracker.task.controller;
 import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,7 +35,7 @@ public class SubtaskController
     ) {
         return ResponseEntity
                 .ok()
-                .body(subtaskService.getSubtaskById(authentication, id));
+                .body(subtaskService.getSubtask(authentication, id));
     }
 
     @PostMapping
@@ -85,7 +86,7 @@ public class SubtaskController
     ) {
         subtaskService.deleteSubtask(id, authentication);
         return ResponseEntity
-                .ok()
+                .status(HttpStatus.NO_CONTENT)
                 .build();
     }
 }

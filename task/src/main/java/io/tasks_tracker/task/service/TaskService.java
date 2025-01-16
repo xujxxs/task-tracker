@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +28,9 @@ import io.tasks_tracker.task.specification.TaskSpecification;
 public class TaskService 
 {
     @Autowired
+    private CacheService cacheService;
+
+    @Autowired
     private TaskRepository taskRepository;
 
     @Autowired
@@ -42,61 +44,12 @@ public class TaskService
                     .anyMatch(role -> role.getAuthority().equals("ADMIN"));
     }
 
-    @CachePut(value = "tasks", key = "#task.id")
-    public Task checkAndSetCompleted(Task task) 
-    {
-        if(task.getSubtasks() == null || task.getSubtasks().isEmpty()) {
-            return task;
-        }
-
-        if(task.getSubtasks().stream().allMatch(Subtask::isCompleted)) {
-            task.setEndedAt(LocalDateTime.now());
-            return taskRepository.save(task);
-        }
-        else {
-            LocalDateTime timeEnd = task.getEndedAt();
-            if(timeEnd != null) {
-                task.setEndedAt(null);
-                return taskRepository.save(task);
-            }
-        }
-        return task;
-    }
-
-    @CachePut(value = "tasks", key = "#task.id")
-    public Task checkAndSetCompletedWithOutSubtaskId(
-            Task task, 
-            Long idSubtask
-    ) {
-        if(task.getSubtasks() == null || task.getSubtasks().isEmpty()) {
-            return task;
-        }
-        
-        if(task.getSubtasks().stream()
-            .filter(s -> !s.getId().equals(idSubtask))
-            .allMatch(Subtask::isCompleted)
-        ) {
-            task.setEndedAt(LocalDateTime.now());
-            return taskRepository.save(task);
-        }
-        else {
-            LocalDateTime timeEnd = task.getEndedAt();
-            if(timeEnd != null) {
-                task.setEndedAt(null);
-                return taskRepository.save(task);
-            }
-        }
-        return task;
-    }
-
-    @Cacheable(value = "tasks", key = "#id")
     public Task getTask(
             Authentication authentication,
             Long id
     ) throws NotFoundException, NoAccessException 
     {
-        Task task = taskRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException("Task", id));
+        Task task = cacheService.getTaskById(id);
         
         if(!hasAccess(task, authentication)) {
             throw new NoAccessException("task", id);
@@ -160,22 +113,16 @@ public class TaskService
         task.setCreatedBy(username);
 
         Task savedTask = taskRepository.save(task);
-        if (taskRequest.getSubtasks() != null && !taskRequest.getSubtasks().isEmpty()) {
-            List<Subtask> subtasks = taskRequest.getSubtasks().stream().map(subtaskRequest -> {
-                Subtask subtask = new Subtask();
-                subtask.setTitle(subtaskRequest.getTitle());
-                subtask.setCompleted(subtaskRequest.isCompleted());
-                subtask.setTask(savedTask);
-                subtask.setCreatedBy(username);
+        taskRequest.getSubtasks().forEach(requestSubtask -> {
+            Subtask subtask = new Subtask();
+            subtask.setTitle(requestSubtask.getTitle());
+            subtask.setCompleted(requestSubtask.isCompleted());
+            subtask.setCreatedBy(username);
+            subtask.setTask(savedTask);
+            savedTask.addSubtask(subtaskRepository.save(subtask));
+        });
 
-                return subtask;
-            }).toList();
-
-            List<Subtask> savedSubtasks = subtaskRepository.saveAll(subtasks);
-            savedTask.setSubtasks(savedSubtasks);
-        }
-
-        return taskRepository.save(checkAndSetCompleted(savedTask));
+        return taskRepository.save(cacheService.updateTaskCompletionStatus(savedTask));
     }
 
     @CachePut(value = "tasks", key = "#id")
@@ -192,7 +139,7 @@ public class TaskService
         taskUpdate.setDateEnd(taskRequest.getDateEnd());
         taskUpdate.setImportance(taskRequest.getImportance());
         
-        return taskRepository.save(checkAndSetCompleted(taskUpdate));
+        return taskRepository.save(cacheService.updateTaskCompletionStatus(taskUpdate));
     }
 
     @CacheEvict(value = "tasks", key = "#id")
@@ -202,6 +149,7 @@ public class TaskService
     ) throws NotFoundException, NoAccessException 
     {
         Task task = getTask(authentication, id);
+        task.getSubtasks().forEach(subtask -> cacheService.evictSubtaskFromCache(subtask));
         taskRepository.delete(task);
     }
 }

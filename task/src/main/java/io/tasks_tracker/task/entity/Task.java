@@ -2,6 +2,7 @@ package io.tasks_tracker.task.entity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -45,7 +46,7 @@ public class Task implements Serializable
         orphanRemoval = true
     )
     @JsonManagedReference
-    private List<Subtask> subtasks;
+    private List<Subtask> subtasks = new ArrayList<>();
     
     @Column(nullable = true)
     private LocalDateTime dateEnd;
@@ -66,4 +67,16 @@ public class Task implements Serializable
     
     @Column(nullable = true)
     private LocalDateTime endedAt;
+
+    public void addSubtask(Subtask subtask)
+    {
+        subtasks.add(subtask);
+        subtask.setTask(this);
+    }
+
+    public void removeSubtask(Subtask subtask)
+    {
+        subtasks.removeIf(s -> s.getId().equals(subtask.getId()));
+        subtask.setTask(null);
+    }
 }

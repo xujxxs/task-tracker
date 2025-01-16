@@ -3,7 +3,6 @@ package io.tasks_tracker.task.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -14,24 +13,29 @@ import io.tasks_tracker.task.entity.Task;
 import io.tasks_tracker.task.exception.NoAccessException;
 import io.tasks_tracker.task.exception.NotFoundException;
 import io.tasks_tracker.task.repository.SubtaskRepository;
+import io.tasks_tracker.task.repository.TaskRepository;
 
 @Service
 public class SubtaskService 
 {
     @Autowired
-    private SubtaskRepository subtaskRepository;
+    private CacheService cacheService;
 
     @Autowired
     private TaskService taskService;
 
-    @Cacheable(value = "subtasks", key = "#id")
-    public Subtask getSubtaskById(
+    @Autowired
+    private SubtaskRepository subtaskRepository;
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    public Subtask getSubtask(
             Authentication authentication,
             Long id
     ) throws NotFoundException, NoAccessException
     {
-        Subtask subtask = subtaskRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException("Subtask", id));
+        Subtask subtask = cacheService.getSubtaskById(id);
 
         if(!taskService.hasAccess(subtask.getTask(), authentication)) {
             throw new NoAccessException("subtask", id);
@@ -56,7 +60,9 @@ public class SubtaskService
         newSubtask.setTask(task);
 
         Subtask savedSubtask = subtaskRepository.save(newSubtask);
-        taskService.checkAndSetCompleted(savedSubtask.getTask());
+        task.addSubtask(savedSubtask);
+    
+        cacheService.updateTaskCompletionStatus(task);
         return savedSubtask;
     }
 
@@ -67,11 +73,12 @@ public class SubtaskService
             Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
-        Subtask subtask = getSubtaskById(authentication, id);
+        Subtask subtask = getSubtask(authentication, id);
         subtask.setCompleted(isCompleted);
         
-        taskService.checkAndSetCompleted(subtask.getTask());
-        return subtaskRepository.save(subtask);
+        Subtask resSubtask = subtaskRepository.save(subtask);
+        cacheService.updateTaskCompletionStatus(cacheService.checkOnCacheInSubtask(resSubtask.getTask()));
+        return resSubtask;
     }
 
     @CachePut(value = "subtasks", key = "#id")
@@ -81,12 +88,13 @@ public class SubtaskService
             Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
-        Subtask updateSubtask = getSubtaskById(authentication, id);
+        Subtask updateSubtask = getSubtask(authentication, id);
         updateSubtask.setTitle(subtask.getTitle());
         updateSubtask.setCompleted(subtask.isCompleted());
 
-        taskService.checkAndSetCompleted(updateSubtask.getTask());
-        return subtaskRepository.save(updateSubtask);
+        Subtask resSubtask = subtaskRepository.save(updateSubtask);
+        cacheService.updateTaskCompletionStatus(cacheService.checkOnCacheInSubtask(resSubtask.getTask()));
+        return resSubtask;
     }
 
     @CacheEvict(value = "subtasks", key = "#id")
@@ -95,10 +103,10 @@ public class SubtaskService
             Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
-        Subtask subtask = getSubtaskById(authentication, id);
-        Task task = subtask.getTask();
-
-        subtaskRepository.deleteById(id);
-        taskService.checkAndSetCompletedWithOutSubtaskId(task, id);
+        Subtask subtask = getSubtask(authentication, id);
+        Task task = cacheService.getTaskById(subtask.getTask().getId());
+        task.removeSubtask(subtask);
+        taskRepository.save(task);
+        cacheService.updateTaskCompletionStatus(task);
     }
 }
