@@ -55,10 +55,15 @@
 - [Spring for RabbitMQ](https://docs.spring.io/spring-amqp/reference/) - Предоставляет общую платформу для отправки и получения сообщений между сервисами.
 - [Spring Data JPA](https://docs.spring.io/spring-data/jpa/reference/) - Хранение данных в SQL бд. 
 - [Spring Data MongoDB](https://docs.spring.io/spring-data/mongodb/reference/) - Хранение данных в NoSQL бд.
+- [Spring Data Redis](https://docs.spring.io/spring-data/redis/reference/) - Обеспечивает подключение Redis и поддержку репозитория для базы данных Redis. Это упрощает разработку приложений с помощью согласованной модели программирования, которым необходим доступ к источникам данных Redis.
+- [Spring Cache](https://docs.spring.io/spring-boot/reference/io/caching.html) - Фреймворк для абстрактного управления кэшем в приложениях Spring. Предоставляет аннотации, такие как `@Cacheable`, `@CacheEvict` и `@CachePut`, для простого кэширования методов, что улучшает производительность приложений за счёт сокращения дорогостоящих операций. 
 - [PostgreSQL Driver](https://jdbc.postgresql.org/) - Драйвер JDBC и R2DBC, который позволяет программам Java подключаться к базе данных PostgreSQL.
 - [Spring Security](https://docs.spring.io/spring-security/reference/) - Настраиваемая среда аутентификации и контроля доступа для приложений Spring
 - [Spring Session](https://docs.spring.io/spring-session/reference/) - Предоставляет API и реализации для управления информацией о сеансе пользователя.
 - [Lombok](https://projectlombok.org/) - Библиотека аннотаций Java, которая помогает сократить шаблонный код.
+
+Для **task**:
+- [Protobuf](https://protobuf.dev/) -  протокол сериализации (передачи) структурированных данных, предложенный Google как эффективная бинарная альтернатива текстовому формату XML.
 
 
 ## Использование
