@@ -1,4 +1,4 @@
-package io.tasks_tracker.profile.controller;
+package io.tasks_tracker.profile.controller.profile;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

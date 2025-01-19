@@ -36,6 +36,12 @@ public class ProfileService
         return userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
+    
+    public User getProfileWithOutCache(String username)
+    {
+        return userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+    }
 
     @CachePut(value = "users", key = "#authentication.name")
     public User updateProfile(

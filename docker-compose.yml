@@ -17,6 +17,12 @@ services:
       RABBITMQ_PASSWORD: profilepassword
       REDIS_HOST: profile-redis
       REDIS_PORT: 6379
+    secrets:
+      - s3_endpoint
+      - s3_region
+      - s3_bucket_name
+      - s3_access_key
+      - s3_secret_key
     depends_on:
       - session-db
       - profile-db
@@ -131,3 +137,15 @@ volumes:
   session-db-data:
   profile-redis-data:
   task-redis-data:
+
+secrets:
+  s3_endpoint:
+    file: ./s3_endpoint.txt
+  s3_bucket_name:
+    file: ./s3_bucket_name.txt
+  s3_region:
+    file: ./s3_region.txt
+  s3_access_key:
+    file: ./s3_access_key.txt
+  s3_secret_key:
+    file: ./s3_secret_key.txt

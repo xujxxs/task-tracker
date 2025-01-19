@@ -62,6 +62,10 @@ public class User implements Serializable
     )
     private Set<Role> roles = new HashSet<>();
 
+    @JsonIgnore
+    @Column(nullable = true, unique = true)
+    private String avatarLink;
+
     public void addRole(Role role)
     {
         this.roles.add(role);

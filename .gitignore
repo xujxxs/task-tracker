@@ -1,5 +1,12 @@
 rabbitmq/
 
+### Fro secrets ###
+s3_endpoint.txt
+s3_region.txt
+s3_bucket_name.txt
+s3_access_key.txt
+s3_secret_key.txt
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
