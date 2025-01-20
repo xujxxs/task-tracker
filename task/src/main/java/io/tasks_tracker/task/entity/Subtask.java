@@ -37,7 +37,7 @@ public class Subtask implements Serializable
     private boolean isCompleted;
 
     @Column(nullable = false)
-    private String createdBy;
+    private Long createdBy;
 
     @CreationTimestamp
     @Column(nullable = false)

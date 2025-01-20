@@ -10,7 +10,7 @@ message Task {
     repeated Subtask subtasks = 5;
     string dateEnd = 6;
     int64 importance = 7;
-    string createdBy = 8;
+    int64 createdBy = 8;
     string createdAt = 9;
     string redactedAt = 10;
     string endedAt = 11;
@@ -20,7 +20,7 @@ message Subtask {
     int64 id = 1;
     string title = 2;
     bool isCompleted = 3;
-    string createdBy = 4;
+    int64 createdBy = 4;
     string createdAt = 5;
     string redactedAt = 6;
     Task task = 7;

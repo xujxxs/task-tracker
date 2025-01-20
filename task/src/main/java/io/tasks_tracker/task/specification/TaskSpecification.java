@@ -161,11 +161,11 @@ public class TaskSpecification
         };
     }
 
-    public static Specification<Task> filterByCreatedBy(String username) 
+    public static Specification<Task> filterByCreatedBy(Long userId) 
     {
         return (root, query, criteriaBuilder) -> {
-            if (username != null) {
-                return criteriaBuilder.equal(root.get("createdBy"), username);
+            if (userId != null) {
+                return criteriaBuilder.equal(root.get("createdBy"), userId);
             }
             return criteriaBuilder.conjunction();
         };

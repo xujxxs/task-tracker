@@ -55,7 +55,7 @@ public class Task implements Serializable
     private Long importance;
 
     @Column(nullable = false)
-    private String createdBy;
+    private Long createdBy;
 
     @CreationTimestamp
     @Column(nullable = false)

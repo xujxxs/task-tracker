@@ -25,11 +25,11 @@ public class RabbitMQListener
     private TaskRepository taskRepository;
 
     @RabbitListener(queues = RabbitMQConfig.DELETE_QUEUE_NAME)
-    public void handlerUserDelete(String username)
+    public void handlerUserDelete(Long userId)
     {
         while(true)
         {
-            List<Task> tasks = taskRepository.findByCreatedBy(username, PageRequest.of(0, PAGE_SIZE));
+            List<Task> tasks = taskRepository.findByCreatedBy(userId, PageRequest.of(0, PAGE_SIZE));
 
             if(tasks.isEmpty()) {
                 break;

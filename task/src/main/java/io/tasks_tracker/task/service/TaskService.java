@@ -1,11 +1,11 @@
 package io.tasks_tracker.task.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,14 +36,20 @@ public class TaskService
     @Autowired
     private SubtaskRepository subtaskRepository;
 
+    public Long getUserId(Authentication authentication)
+    {
+        return (Long) authentication.getDetails();
+    }
+
     public boolean hasAccess(Task task, Authentication authentication)
     {
-        return task.getCreatedBy().equals(authentication.getName())
+        return task.getCreatedBy().equals(getUserId(authentication))
                 || authentication.getAuthorities()
                     .stream()
                     .anyMatch(role -> role.getAuthority().equals("ADMIN"));
     }
 
+    @Cacheable(value = "tasks", key = "#id")
     public Task getTask(
             Authentication authentication,
             Long id
@@ -81,7 +87,7 @@ public class TaskService
             Long equalToImportance,
             Long greaterThanOrEqualToImportance,
             Long lessThanOrEqualToImportance,
-            String username
+            Long userId
     ) {
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize, 
             sortOrder.equalsIgnoreCase("asc") 
@@ -95,14 +101,14 @@ public class TaskService
                 .and(TaskSpecification.filterByUpdated(equalDateUpdated, minDateUpdated, maxDateUpdated))
                 .and(TaskSpecification.filterByEnded(equalDateEnded, minDateEnded, maxDateEnded, isNotCompleted))
                 .and(TaskSpecification.filterByImportance(equalToImportance, greaterThanOrEqualToImportance, lessThanOrEqualToImportance))
-                .and(TaskSpecification.filterByCreatedBy(username));
+                .and(TaskSpecification.filterByCreatedBy(userId));
         
         return taskRepository.findAll(specification, pageable);
     }
 
     public Task createTask(
             TaskCreateRequest taskRequest, 
-            String username
+            Long userId
     ) {
         Task task = new Task();
         task.setTitle(taskRequest.getTask().getTitle());
@@ -110,14 +116,14 @@ public class TaskService
         task.setCategory(taskRequest.getTask().getCategory());
         task.setDateEnd(taskRequest.getTask().getDateEnd());
         task.setImportance(taskRequest.getTask().getImportance());
-        task.setCreatedBy(username);
+        task.setCreatedBy(userId);
 
         Task savedTask = taskRepository.save(task);
         taskRequest.getSubtasks().forEach(requestSubtask -> {
             Subtask subtask = new Subtask();
             subtask.setTitle(requestSubtask.getTitle());
             subtask.setCompleted(requestSubtask.isCompleted());
-            subtask.setCreatedBy(username);
+            subtask.setCreatedBy(userId);
             subtask.setTask(savedTask);
             savedTask.addSubtask(subtaskRepository.save(subtask));
         });

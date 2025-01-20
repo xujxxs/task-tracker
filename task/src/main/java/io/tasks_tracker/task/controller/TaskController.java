@@ -84,7 +84,7 @@ public class TaskController
                     equalToImportance,
                     greaterThanOrEqualToImportance,
                     lessThanOrEqualToImportance,
-                    authentication.getName()
+                    taskService.getUserId(authentication)
         ));
     }
 
@@ -103,7 +103,7 @@ public class TaskController
             Authentication authentication,
             @RequestBody TaskCreateRequest entity
     ) {
-        Task newTask = taskService.createTask(entity, authentication.getName());
+        Task newTask = taskService.createTask(entity, taskService.getUserId(authentication));
         return ResponseEntity
                 .created(URI.create("/tasks/" + newTask.getId().toString()))
                 .body(newTask);

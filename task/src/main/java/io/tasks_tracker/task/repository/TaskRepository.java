@@ -13,6 +13,6 @@ import io.tasks_tracker.task.entity.Task;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> 
 {
-    @Query("SELECT t FROM Task t WHERE t.createdBy = :username")
-    public List<Task> findByCreatedBy(String username, Pageable pageable);
+    @Query("SELECT t FROM Task t WHERE t.createdBy = :userId")
+    public List<Task> findByCreatedBy(Long userId, Pageable pageable);
 }
