@@ -12,7 +12,6 @@ import io.tasks_tracker.profile.exception.EmailUsedException;
 import io.tasks_tracker.profile.exception.InvalidFileExtension;
 import io.tasks_tracker.profile.exception.InvalidFileName;
 import io.tasks_tracker.profile.exception.InvalidPassword;
-import io.tasks_tracker.profile.exception.InvalidSignInForm;
 import io.tasks_tracker.profile.exception.InvalidSignUpForm;
 import io.tasks_tracker.profile.exception.NoAccessException;
 import io.tasks_tracker.profile.exception.NotFoundException;
@@ -51,13 +50,6 @@ public class AdviceException
     @ExceptionHandler(InvalidPassword.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public String invalidPassword(InvalidPassword ex)
-    {
-        return ex.getMessage();
-    }
-
-    @ExceptionHandler(InvalidSignInForm.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public String invalidSignInForm(InvalidSignInForm ex)
     {
         return ex.getMessage();
     }
