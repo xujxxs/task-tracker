@@ -331,7 +331,7 @@ HTTP статус: `204 NO CONTENT`
 **Настройки для MongoDB**:
 - `SESSION_DB_HOST`: Хост для подключения (по умолчанию `localhost`).
 - `SESSION_DB_PORT`: Порт для подключения (по умолчанию `27017`).
-- `SESSION_DB_NAME`: Имя базы данных (по умолчанию `session`).`profilepassword`).
+- `SESSION_DB_NAME`: Имя базы данных (по умолчанию `session`).
 
 **Настройки для RabbitMQ**:
 - `RABBITMQ_HOST`: Хост для подключения (по умолчанию `localhost`).
