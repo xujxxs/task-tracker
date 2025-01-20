@@ -40,17 +40,17 @@ public class ProfileController
     {
         return ResponseEntity
                 .ok()
-                .body(profileService.getProfile(authentication.getName()));
+                .body(profileService.getProfile(profileService.getUserId(authentication)));
     }
     
     @PutMapping
     public ResponseEntity<User> updateProfile(
-            @RequestBody UpdateProfileRequest entity,
+            @RequestBody UpdateProfileRequest request,
             Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
-                .body(profileService.updateProfile(authentication, entity));
+                .body(profileService.updateProfile(request, profileService.getUserId(authentication)));
     }
 
     @DeleteMapping
@@ -58,43 +58,52 @@ public class ProfileController
                 Authentication authentication,
                 HttpServletRequest request
     ) {
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.delete", authentication.getName());
+        rabbitTemplate.convertAndSend(
+            RabbitMQConfig.EXCHANGE_NAME, 
+            "user.delete", 
+            profileService.getUserId(authentication)
+        );
+        
         auntificationService.logoutAll(authentication, request);
-        profileService.deleteProfile(authentication);
+        profileService.deleteProfile(profileService.getUserId(authentication));
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
 
-    @GetMapping("/{username}")
-    public ResponseEntity<User> getProfileByUsername(
-            @PathVariable String username,
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getProfileById(
+            @PathVariable Long id,
             Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
-                .body(profileService.getProfileByUsername(authentication, username));
+                .body(profileService.getProfileById(authentication, id));
     }
     
-    @PutMapping("/{username}")
-    public ResponseEntity<User> updateProfileByUsername(
-            @PathVariable String username,
-            @RequestBody UpdateProfileRequest entity,
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateProfileById(
+            @PathVariable Long id,
+            @RequestBody UpdateProfileRequest request,
             Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
-                .body(profileService.updateProfileByUsername(authentication, username, entity));
+                .body(profileService.updateProfileById(
+                    request, 
+                    authentication, 
+                    profileService.getUserId(authentication)
+                ));
     }
 
-    @DeleteMapping("/{username}")
-    public ResponseEntity<?> deleteProfileByUsername(
-            @PathVariable String username,
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProfileById(
+            @PathVariable Long id,
             Authentication authentication,
             HttpServletRequest request
     ) {
-        User userToDelete = profileService.getProfileByUsername(authentication, username);
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.delete", userToDelete.getUsername());
+        User userToDelete = profileService.getProfileById(authentication, id);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.delete", id);
         
         if(userToDelete.getUsername().equals(authentication.getName())) {
             auntificationService.logoutAll(authentication, request);
@@ -103,7 +112,7 @@ public class ProfileController
             auntificationService.deleteAllSessions(userToDelete.getUsername());
         }
 
-        profileService.deleteProfileByUsername(authentication, username);
+        profileService.deleteProfileById(authentication, id);
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

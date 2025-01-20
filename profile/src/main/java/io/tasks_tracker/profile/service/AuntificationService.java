@@ -75,11 +75,15 @@ public class AuntificationService
             HttpServletResponse response,
             SignInRequest form
     ) {
-        Authentication authentication = authenticationManager.authenticate(
-            UsernamePasswordAuthenticationToken.unauthenticated(
-                form.getUsername(), form.getPassword()
-            )
+        UsernamePasswordAuthenticationToken token = UsernamePasswordAuthenticationToken.unauthenticated(
+            form.getUsername(), form.getPassword()
         );
+
+        User user = userRepository.findByUsername(form.getUsername())
+            .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+        token.setDetails(user.getId());
+
+        Authentication authentication = authenticationManager.authenticate(token);
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);

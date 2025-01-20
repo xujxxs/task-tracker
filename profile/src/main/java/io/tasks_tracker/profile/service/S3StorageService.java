@@ -69,8 +69,8 @@ public class S3StorageService
                 .build());
     }
 
-    @CachePut(value = "users", key = "#userToUpdateAvatar.username")
-    public void uploadAvatar(
+    @CachePut(value = "users", key = "#userToUpdateAvatar.id")
+    public User uploadAvatar(
             MultipartFile file,
             User userToUpdateAvatar
     ) throws IOException
@@ -93,10 +93,10 @@ public class S3StorageService
         ));
 
         userToUpdateAvatar.setAvatarLink(fileName);
-        userRepository.save(userToUpdateAvatar);
+        return userRepository.save(userToUpdateAvatar);
     }
 
-    @CachePut(value = "users", key = "#userToDeleteAvatar.username")
+    @CachePut(value = "users", key = "#userToDeleteAvatar.id")
     public User deleteAvatar(User userToDeleteAvatar)
     {
         if(userToDeleteAvatar.getAvatarLink() == null || userToDeleteAvatar.getAvatarLink().isEmpty()) {

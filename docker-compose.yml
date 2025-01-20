@@ -29,7 +29,7 @@ services:
       - rabbitmq
       - profile-redis
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
   
   task:
     build: 
@@ -55,7 +55,7 @@ services:
       - rabbitmq
       - task-redis
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
     
   profile-db:
     image: postgres:latest
@@ -67,7 +67,7 @@ services:
       - ./init-scripts/profile-db-init.sql:/docker-entrypoint-initdb.d/profile-db-init.sql
       - profile-db-data:/var/lib/postgresql/data
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
       
   task-db:
     image: postgres:latest
@@ -79,7 +79,7 @@ services:
       - ./init-scripts/task-db-init.sql:/docker-entrypoint-initdb.d/task-db-init.sql
       - task-db-data:/var/lib/postgresql/data
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
       
   session-db:
     image: mongo:latest
@@ -87,7 +87,7 @@ services:
       - ./init-scripts/session-db-init.js:/docker-entrypoint-initdb.d/session-db-init.js
       - session-db-data:/data/db
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
 
   rabbitmq:
     image: rabbitmq:latest
@@ -100,21 +100,21 @@ services:
       - ./rabbitmq:/var/lib/rabbitmq
     command: rabbitmq-server --definitions /etc/rabbitmq/definitions.json
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
 
   profile-redis:
     image: redis:latest
     volumes:
       - profile-redis-data:/data
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
 
   task-redis:
     image: redis:latest
     volumes:
       - task-redis-data:/data
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
 
   nginx:
     image: nginx:latest
@@ -126,10 +126,10 @@ services:
       - profile
       - task
     networks:
-      - tasks_tracker
+      - tasks_tracker_net
 
 networks:
-  tasks_tracker:
+  tasks_tracker_net:
 
 volumes:
   profile-db-data:

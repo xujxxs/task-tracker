@@ -20,6 +20,11 @@ public class ProfileService
     @Autowired
     private UserRepository userRepository;
 
+    public Long getUserId(Authentication authentication)
+    {
+        return (Long) authentication.getDetails();
+    }
+
     public boolean hasAccess(
             Authentication authentication, 
             User user
@@ -30,25 +35,25 @@ public class ProfileService
                     .anyMatch(role -> role.getAuthority().equals("ADMIN"));
     }
 
-    @Cacheable(value = "users", key = "#username")
-    public User getProfile(String username)
+    @Cacheable(value = "users", key = "#userId")
+    public User getProfile(Long userId)
     {
-        return userRepository.findByUsername(username)
+        return userRepository.findById(userId)
             .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
     
-    public User getProfileWithOutCache(String username)
+    public User getProfileWithOutCache(Long userId)
     {
-        return userRepository.findByUsername(username)
+        return userRepository.findById(userId)
             .orElseThrow(() -> new UsernameNotFoundException("User not found."));
     }
 
-    @CachePut(value = "users", key = "#authentication.name")
+    @CachePut(value = "users", key = "#userId")
     public User updateProfile(
-            Authentication authentication,
-            UpdateProfileRequest updateProfileRequest
+            UpdateProfileRequest updateProfileRequest,
+            Long userId
     ) {
-        User user = getProfile(authentication.getName());
+        User user = getProfile(userId);
 
         if(!user.getEmail().equals(updateProfileRequest.getEmail())
             && userRepository.findByEmail(updateProfileRequest.getEmail()).isPresent()) {
@@ -63,31 +68,32 @@ public class ProfileService
         return userRepository.save(user);
     }
 
-    @CacheEvict(value = "users", key = "#authentication.name")
-    public void deleteProfile(Authentication authentication)
+    @CacheEvict(value = "users", key = "#userId")
+    public void deleteProfile(Long userId)
     {
-        userRepository.delete(getProfile(authentication.getName()));
+        userRepository.deleteById(userId);
     }
 
-    public User getProfileByUsername(
+    @CachePut(value = "users", key = "#userId")
+    public User getProfileById(
             Authentication authentication, 
-            String username
+            Long userId
     ) {
-        User user = getProfile(username);
+        User user = getProfile(userId);
 
         if(!hasAccess(authentication, user)) {
-             throw new NoAccessException("user", username);
+             throw new NoAccessException("user", userId);
         }
         return user;
     }
 
-    @CachePut(value = "users", key = "#username")
-    public User updateProfileByUsername(
-            Authentication authentication, 
-            String username,
-            UpdateProfileRequest updateProfileRequest
+    @CachePut(value = "users", key = "#userId")
+    public User updateProfileById(
+            UpdateProfileRequest updateProfileRequest,
+            Authentication authentication,
+            Long userId
     ) {
-        User user = getProfileByUsername(authentication, username);
+        User user = getProfileById(authentication, userId);
 
         if(!user.getEmail().equals(updateProfileRequest.getEmail())
             && userRepository.findByEmail(updateProfileRequest.getEmail()).isPresent()) {
@@ -102,12 +108,12 @@ public class ProfileService
         return userRepository.save(user);
     }
 
-    @CacheEvict(value = "users", key = "#username")
-    public void deleteProfileByUsername(
-            Authentication authentication, 
-            String username
+    @CacheEvict(value = "users", key = "#userId")
+    public void deleteProfileById(
+            Authentication authentication,
+            Long userId
     ) {
-        User user = getProfileByUsername(authentication, username);
+        User user = getProfileById(authentication, userId);
         userRepository.delete(user);
     }
 }

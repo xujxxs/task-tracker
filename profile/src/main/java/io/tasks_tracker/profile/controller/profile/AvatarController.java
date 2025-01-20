@@ -36,7 +36,7 @@ public class AvatarController
     @GetMapping("/avatar")
     public ResponseEntity<InputStreamResource> getAvatar(Authentication authentication) 
     {
-        User user = profileService.getProfileWithOutCache(authentication.getName());
+        User user = profileService.getProfileWithOutCache(profileService.getUserId(authentication));
 
         return ResponseEntity
                 .ok()
@@ -53,7 +53,7 @@ public class AvatarController
     {
         s3StorageService.uploadAvatar(
             file,
-            profileService.getProfileWithOutCache(authentication.getName())
+            profileService.getProfileWithOutCache(profileService.getUserId(authentication))
         );
         
         return ResponseEntity
@@ -65,7 +65,7 @@ public class AvatarController
     public ResponseEntity<?> deleteAvatar(Authentication authentication)
     {
         s3StorageService.deleteAvatar(
-            profileService.getProfileWithOutCache(authentication.getName())
+            profileService.getProfileWithOutCache(profileService.getUserId(authentication))
         );
 
         return ResponseEntity
@@ -73,14 +73,14 @@ public class AvatarController
                 .build();
     }
 
-    @GetMapping("/{username}/avatar")
-    public ResponseEntity<InputStreamResource> getAvatarByUsername(
-            @PathVariable String username,
+    @GetMapping("/{id}/avatar")
+    public ResponseEntity<InputStreamResource> getAvatarById(
+            @PathVariable Long userId,
             Authentication authentication
     ) {
-        User user = profileService.getProfileWithOutCache(username);
+        User user = profileService.getProfileWithOutCache(profileService.getUserId(authentication));
         if(!profileService.hasAccess(authentication, user)) {
-            throw new NoAccessException("user", username);
+            throw new NoAccessException("user", user.getId());
         }
 
         return ResponseEntity
@@ -90,16 +90,16 @@ public class AvatarController
                 .body(new InputStreamResource(s3StorageService.getAvatar(user)));
     }
 
-    @PostMapping("/{username}/avatar")
-    public ResponseEntity<?> postAvatarByUsername(
-            @PathVariable String username,
+    @PostMapping("/{id}/avatar")
+    public ResponseEntity<?> postAvatarById(
+            @PathVariable Long userId,
             @RequestParam("file") MultipartFile file,
             Authentication authentication
     ) throws IOException
     {
-        User user = profileService.getProfileWithOutCache(username);
+        User user = profileService.getProfileWithOutCache(profileService.getUserId(authentication));
         if(!profileService.hasAccess(authentication, user)) {
-            throw new NoAccessException("user", username);
+            throw new NoAccessException("user", user.getId());
         }
 
         s3StorageService.uploadAvatar(file, user);
@@ -109,14 +109,14 @@ public class AvatarController
                 .build();
     }
 
-    @DeleteMapping("/{username}/avatar")
-    public ResponseEntity<?> deleteAvatarByUsername(
-            @PathVariable String username,
+    @DeleteMapping("/{id}/avatar")
+    public ResponseEntity<?> deleteAvatarById(
+            @PathVariable Long userId,
             Authentication authentication
     ) {
-        User user = profileService.getProfileWithOutCache(username);
+        User user = profileService.getProfileWithOutCache(profileService.getUserId(authentication));
         if(!profileService.hasAccess(authentication, user)) {
-            throw new NoAccessException("user", username);
+            throw new NoAccessException("user", user.getId());
         }
 
         s3StorageService.deleteAvatar(user);
