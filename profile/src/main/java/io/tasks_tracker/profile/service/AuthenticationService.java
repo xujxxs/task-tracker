@@ -25,7 +25,9 @@ import io.tasks_tracker.profile.exception.InvalidSignUpForm;
 import io.tasks_tracker.profile.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class AuthenticationService 
 {
@@ -51,17 +53,21 @@ public class AuthenticationService
 
     public Long getUserId(Authentication authentication)
     {
+        log.debug("Getting user id for authentication: {}", authentication.getName());
         return (Long) authentication.getDetails();
     }
 
     public void signUp(SignUpRequest form) throws InvalidSignUpForm
     {
+        log.info("Starting registration for username: {}", form.getUsername());
+
         if(userRepository.findByUsername(form.getUsername()).isPresent()){
-            throw new InvalidSignUpForm("Username is already exist");
+            log.warn("Registration failed: username already exists: {}", form.getUsername());
+            throw new InvalidSignUpForm("Username already exist");
         }
 
-
         if(userRepository.findByEmail(form.getUser_details().getEmail()).isPresent()){
+            log.warn("Registration failed: email already exist: {}", form.getUser_details().getEmail());
             throw new EmailUsedException();
         }
 
@@ -76,7 +82,9 @@ public class AuthenticationService
         
         user.addRole(new Role(RoleEnum.USER));
 
-        userRepository.save(user);
+        User registredUser = userRepository.save(user);
+        log.info("User: {} successfully registred with username: {}",
+            registredUser.getId(), registredUser.getUsername());
     }
 
     public void signIn(
@@ -84,6 +92,7 @@ public class AuthenticationService
         HttpServletResponse response,
         SignInRequest form
     ) {
+        log.info("Logging attemp for username: {}", form.getUsername());
         UsernamePasswordAuthenticationToken token = UsernamePasswordAuthenticationToken.unauthenticated(
             form.getUsername(), form.getPassword()
         );
@@ -99,6 +108,7 @@ public class AuthenticationService
 
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
+        log.info("User successfully authenticated: {}", form.getUsername());
     }
 
     public void changePassword(
@@ -106,26 +116,42 @@ public class AuthenticationService
         UpdatePasswordRequest form
     ) throws UsernameNotFoundException 
     {
+        Long userId = getUserId(authentication);
+        log.info("Password change request for user: {}", userId);
         User user = userRepository.findByUsername(authentication.getName())
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            .orElseThrow(() -> {
+                log.error("Password change failed - user not found: {}", authentication.getName());
+                return new UsernameNotFoundException("User not found");
+            });
         
         if(!passwordEncoder.matches(form.getOld_password(), user.getPassword())) {
+            log.warn("Invalid old password for user: {}", userId);
             throw new InvalidPassword();
         }
 
         user.setPassword(passwordEncoder.encode(form.getNew_password()));
         userRepository.save(user);
+        log.info("Password successfully changed for user: {}", userId);
     }
 
     public void logoutAll(Authentication authentication, HttpServletRequest request)
     {
+        Long userId = getUserId(authentication);
+
+        log.info("Invalidating session for user: {}", userId);
         request.getSession().invalidate();
+
+        log.info("Logging out all sessions for user: {}", userId);
         deleteAllSessions(authentication.getName());
     }
 
     public void deleteAllSessions(String username)
     {
+        log.info("Delete all session for user with username: {}", username);
+
         Query query = new Query(Criteria.where("principal").is(username));
-        mongoTemplate.remove(query, "sessions");
+        long deletedCount = mongoTemplate.remove(query, "sessions").getDeletedCount();
+
+        log.info("Deleted {} sessions for user with username: {}", deletedCount, username);
     }
 }

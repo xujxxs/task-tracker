@@ -54,7 +54,9 @@ public class ProfileController
     ) {
         return ResponseEntity
                 .ok()
-                .body(profileService.updateProfile(request, authenticationService.getUserId(authentication)));
+                .body(profileService.updateProfileById(
+                    request, authentication, authenticationService.getUserId(authentication)
+                ));
     }
 
     @DeleteMapping
@@ -69,7 +71,7 @@ public class ProfileController
         );
         
         authenticationService.logoutAll(authentication, request);
-        profileService.deleteProfile(authenticationService.getUserId(authentication));
+        profileService.deleteProfileById(authentication, authenticationService.getUserId(authentication));
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();

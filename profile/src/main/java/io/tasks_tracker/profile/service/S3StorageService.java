@@ -15,12 +15,14 @@ import io.tasks_tracker.profile.exception.InvalidFileExtension;
 import io.tasks_tracker.profile.exception.InvalidFileName;
 import io.tasks_tracker.profile.exception.NotFoundException;
 import io.tasks_tracker.profile.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+@Slf4j
 @Service
 public class S3StorageService 
 {
@@ -30,9 +32,9 @@ public class S3StorageService
     private List<String> supportedExtensions = new ArrayList<>();
 
     public S3StorageService(
-        @Value("${cloud.s3.bucket-name}") String bucketName,
-        S3Client s3Client,
-        UserRepository userRepository
+            @Value("${cloud.s3.bucket-name}") String bucketName,
+            S3Client s3Client,
+            UserRepository userRepository
     ) {
         this.bucketName = bucketName;
         this.s3Client = s3Client;
@@ -43,16 +45,19 @@ public class S3StorageService
     private String getFileExtension(String fileName)
     {
         if(fileName == null) {
+            log.warn("Upload attemp with file empty");
             throw new InvalidFileName("file name is empty");
         }
         int dotIndex = fileName.lastIndexOf(".");
 
         if(dotIndex < 0) {
+            log.warn("Invalid file name '{}'", fileName);
             throw new InvalidFileName("invalid name");
         }
 
         String fileExtension = fileName.substring(dotIndex);
         if(!supportedExtensions.contains(fileExtension)) {
+            log.warn("Unsupported file extension '{}' for file '{}'", fileExtension, fileName);
             throw new InvalidFileExtension(supportedExtensions);
         }
         return fileExtension;
@@ -61,9 +66,11 @@ public class S3StorageService
     public InputStream getAvatar(User userToGetAvatar)
     {
         if(userToGetAvatar.getAvatarLink() == null || userToGetAvatar.getAvatarLink().isEmpty()) {
+            log.warn("Avatar not found for user: {}", userToGetAvatar.getId());
             throw new NotFoundException("Avatar");
         }
 
+        log.info("Retrieving avatar user: {}", userToGetAvatar.getId());
         return s3Client.getObject(
             GetObjectRequest.builder()
                 .bucket(bucketName)
@@ -81,9 +88,11 @@ public class S3StorageService
         String fileName = "avatars/" + userToUpdateAvatar.getId().toString() + fileExtension;
         
         if(userToUpdateAvatar.getAvatarLink() != null) {
+            log.info("Deleting existing avatar for user: {}", userToUpdateAvatar.getId());
             userToUpdateAvatar = deleteAvatar(userToUpdateAvatar);
         }
         
+        log.info("Uploading new avatar for user: {} to S3 as '{}'", userToUpdateAvatar.getId(), fileName);
         s3Client.putObject(
             PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -95,16 +104,20 @@ public class S3StorageService
         ));
 
         userToUpdateAvatar.setAvatarLink(fileName);
-        return userRepository.save(userToUpdateAvatar);
+        User savedUser = userRepository.save(userToUpdateAvatar);
+        log.info("Avatar updated successfully for user: {}", savedUser.getId());
+        return savedUser;
     }
 
     @CachePut(value = "users", key = "#userToDeleteAvatar.id")
     public User deleteAvatar(User userToDeleteAvatar)
     {
         if(userToDeleteAvatar.getAvatarLink() == null || userToDeleteAvatar.getAvatarLink().isEmpty()) {
+            log.debug("No avatar to delete for user: {}", userToDeleteAvatar.getId());
             return userToDeleteAvatar;
         }
 
+        log.info("Deleting avatar from S3 for user: {}", userToDeleteAvatar.getId());
         s3Client.deleteObject(DeleteObjectRequest.builder()
             .bucket(bucketName)
             .key(userToDeleteAvatar.getAvatarLink())
@@ -112,6 +125,8 @@ public class S3StorageService
         );
 
         userToDeleteAvatar.setAvatarLink(null);
-        return userRepository.save(userToDeleteAvatar);
+        User savedUser = userRepository.save(userToDeleteAvatar);
+        log.info("Avatar removed for user: {}", savedUser.getId());
+        return savedUser;
     }
 }
