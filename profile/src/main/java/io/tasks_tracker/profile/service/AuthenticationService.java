@@ -1,6 +1,5 @@
 package io.tasks_tracker.profile.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -28,22 +27,32 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Service
-public class AuntificationService 
+public class AuthenticationService 
 {
-    @Autowired
-    private MongoTemplate mongoTemplate;
+    private final MongoTemplate mongoTemplate;
+    private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
+    private final SecurityContextRepository securityContextRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public AuthenticationService(
+        MongoTemplate mongoTemplate,
+        AuthenticationManager authenticationManager,
+        PasswordEncoder passwordEncoder,
+        SecurityContextRepository securityContextRepository,
+        UserRepository userRepository
+    ) {
+        this.mongoTemplate = mongoTemplate;
+        this.authenticationManager = authenticationManager;
+        this.passwordEncoder = passwordEncoder;
+        this.securityContextRepository = securityContextRepository;
+        this.userRepository = userRepository;
+    }
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private SecurityContextRepository securityContextRepository;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    public Long getUserId(Authentication authentication)
+    {
+        return (Long) authentication.getDetails();
+    }
 
     public void signUp(SignUpRequest form) throws InvalidSignUpForm
     {
@@ -71,9 +80,9 @@ public class AuntificationService
     }
 
     public void signIn(
-            HttpServletRequest request, 
-            HttpServletResponse response,
-            SignInRequest form
+        HttpServletRequest request, 
+        HttpServletResponse response,
+        SignInRequest form
     ) {
         UsernamePasswordAuthenticationToken token = UsernamePasswordAuthenticationToken.unauthenticated(
             form.getUsername(), form.getPassword()
@@ -93,9 +102,9 @@ public class AuntificationService
     }
 
     public void changePassword(
-            Authentication authentication, 
-            UpdatePasswordRequest form
-    ) throws UsernameNotFoundException
+        Authentication authentication, 
+        UpdatePasswordRequest form
+    ) throws UsernameNotFoundException 
     {
         User user = userRepository.findByUsername(authentication.getName())
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));

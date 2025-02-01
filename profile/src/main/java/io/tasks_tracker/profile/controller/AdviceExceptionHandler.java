@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MultipartException;
 
 import io.tasks_tracker.profile.exception.EmailUsedException;
 import io.tasks_tracker.profile.exception.InvalidFileExtension;
@@ -17,7 +18,7 @@ import io.tasks_tracker.profile.exception.NoAccessException;
 import io.tasks_tracker.profile.exception.NotFoundException;
 
 @RestControllerAdvice
-public class AdviceException
+public class AdviceExceptionHandler
 {
     @ExceptionHandler(IOException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -80,5 +81,12 @@ public class AdviceException
     public String notFoundException(NotFoundException ex)
     {
         return ex.getMessage();
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String multipartException()
+    {
+        return "Current request is not a multipart request";
     }
 }

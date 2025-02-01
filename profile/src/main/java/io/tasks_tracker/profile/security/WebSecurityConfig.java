@@ -1,6 +1,5 @@
 package io.tasks_tracker.profile.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,11 +25,16 @@ import org.springframework.security.web.context.SecurityContextRepository;
 @EnableMethodSecurity
 public class WebSecurityConfig 
 {
-    @Autowired
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public WebSecurityConfig(
+        UserDetailsService userDetailsService,
+        PasswordEncoder passwordEncoder
+    ) {
+        this.userDetailsService = userDetailsService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception 
@@ -67,10 +71,9 @@ public class WebSecurityConfig
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) 
-    throws Exception 
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration ac) throws Exception 
     {
-        return authenticationConfiguration.getAuthenticationManager();
+        return ac.getAuthenticationManager();
     }
 
     @Bean

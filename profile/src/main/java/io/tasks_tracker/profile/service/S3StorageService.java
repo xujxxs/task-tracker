@@ -2,9 +2,9 @@ package io.tasks_tracker.profile.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
@@ -24,19 +24,21 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @Service
 public class S3StorageService 
 {
-    @Value("${cloud.s3.endpoint}")
-    private String endpoint;
+    private final String bucketName;
+    private final S3Client s3Client;
+    private final UserRepository userRepository;
+    private List<String> supportedExtensions = new ArrayList<>();
 
-    @Value("${cloud.s3.bucket-name}")
-    private String bucketName;
-
-    @Autowired
-    private S3Client s3Client;
-
-    private List<String> supportedExtensions = List.of(".jpeg", ".jpg");
-
-    @Autowired
-    private UserRepository userRepository;
+    public S3StorageService(
+        @Value("${cloud.s3.bucket-name}") String bucketName,
+        S3Client s3Client,
+        UserRepository userRepository
+    ) {
+        this.bucketName = bucketName;
+        this.s3Client = s3Client;
+        this.userRepository = userRepository;
+        this.supportedExtensions = List.of(".jpeg", ".jpg");
+    }
 
     private String getFileExtension(String fileName)
     {
@@ -76,7 +78,7 @@ public class S3StorageService
     ) throws IOException
     {
         String fileExtension = getFileExtension(file.getOriginalFilename());
-        String fileName = "avatars/" + String.valueOf(userToUpdateAvatar.getId()) + fileExtension;
+        String fileName = "avatars/" + userToUpdateAvatar.getId().toString() + fileExtension;
         
         if(userToUpdateAvatar.getAvatarLink() != null) {
             userToUpdateAvatar = deleteAvatar(userToUpdateAvatar);

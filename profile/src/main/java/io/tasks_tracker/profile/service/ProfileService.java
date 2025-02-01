@@ -1,6 +1,5 @@
 package io.tasks_tracker.profile.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,17 +16,16 @@ import io.tasks_tracker.profile.repository.UserRepository;
 @Service
 public class ProfileService 
 {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    public Long getUserId(Authentication authentication)
+    public ProfileService(UserRepository userRepository)
     {
-        return (Long) authentication.getDetails();
+        this.userRepository = userRepository;
     }
 
     public boolean hasAccess(
-            Authentication authentication, 
-            User user
+        Authentication authentication, 
+        User user
     ) {
         return user.getUsername().equals(authentication.getName())
                 || authentication.getAuthorities()
@@ -50,8 +48,8 @@ public class ProfileService
 
     @CachePut(value = "users", key = "#userId")
     public User updateProfile(
-            UpdateProfileRequest updateProfileRequest,
-            Long userId
+        UpdateProfileRequest updateProfileRequest,
+        Long userId
     ) {
         User user = getProfile(userId);
 
@@ -76,8 +74,8 @@ public class ProfileService
 
     @CachePut(value = "users", key = "#userId")
     public User getProfileById(
-            Authentication authentication, 
-            Long userId
+        Authentication authentication, 
+        Long userId
     ) {
         User user = getProfile(userId);
 
@@ -89,9 +87,9 @@ public class ProfileService
 
     @CachePut(value = "users", key = "#userId")
     public User updateProfileById(
-            UpdateProfileRequest updateProfileRequest,
-            Authentication authentication,
-            Long userId
+        UpdateProfileRequest updateProfileRequest,
+        Authentication authentication,
+        Long userId
     ) {
         User user = getProfileById(authentication, userId);
 
@@ -110,8 +108,8 @@ public class ProfileService
 
     @CacheEvict(value = "users", key = "#userId")
     public void deleteProfileById(
-            Authentication authentication,
-            Long userId
+        Authentication authentication,
+        Long userId
     ) {
         User user = getProfileById(authentication, userId);
         userRepository.delete(user);

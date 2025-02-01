@@ -33,12 +33,6 @@ public class S3Config
     @Bean
     public S3Client s3Client()
     {
-        System.out.println(endpoint);
-        System.out.println(bucketName);
-        System.out.println(region);
-        System.out.println(accessKey);
-        System.out.println(secretKey);
-
         return S3Client.builder()
                 .credentialsProvider(StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(

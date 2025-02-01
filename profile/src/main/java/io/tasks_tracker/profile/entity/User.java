@@ -72,7 +72,7 @@ public class User implements Serializable
         role.setUser(this);
     }
 
-    public Collection<? extends GrantedAuthority> getAuthorities()
+    public Collection<GrantedAuthority> getAuthorities()
     {
         return this
                 .roles

@@ -2,6 +2,7 @@ package io.tasks_tracker.profile.dto;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -9,6 +10,7 @@ import lombok.Data;
 public class UpdateProfileRequest 
 {
     @NotNull
+    @Email
     private String email;
     
     @NotNull
