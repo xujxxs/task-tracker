@@ -1,7 +1,8 @@
-package io.tasks_tracker.task.dto;
+package io.tasks_tracker.task.dto.task;
 
 import java.util.List;
 
+import io.tasks_tracker.task.dto.subtask.SubtaskRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

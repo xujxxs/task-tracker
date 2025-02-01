@@ -2,15 +2,14 @@ package io.tasks_tracker.task.controller;
 
 import java.net.URI;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.tasks_tracker.task.dto.SubtaskCreateRequest;
-import io.tasks_tracker.task.dto.SubtaskRequest;
+import io.tasks_tracker.task.dto.subtask.SubtaskCreateRequest;
+import io.tasks_tracker.task.dto.subtask.SubtaskRequest;
 import io.tasks_tracker.task.entity.Subtask;
 import io.tasks_tracker.task.service.SubtaskService;
 
@@ -25,13 +24,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RequestMapping("/api/subtasks")
 public class SubtaskController 
 {
-    @Autowired
-    private SubtaskService subtaskService;
+    private final SubtaskService subtaskService;
+
+    public SubtaskController(SubtaskService subtaskService)
+    {
+        this.subtaskService = subtaskService;
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Subtask> getSubtask(
-            @PathVariable Long id,
-            Authentication authentication
+        @PathVariable Long id,
+        Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
@@ -40,8 +43,8 @@ public class SubtaskController
 
     @PostMapping
     public ResponseEntity<Subtask> createSubtask(
-            @RequestBody SubtaskCreateRequest subtask,
-            Authentication authentication
+        @RequestBody SubtaskCreateRequest subtask,
+        Authentication authentication
     ) {
         Subtask newSubtask = subtaskService.createSubtask(subtask, authentication);
         return ResponseEntity
@@ -51,9 +54,9 @@ public class SubtaskController
 
     @PutMapping("/{id}/mark")
     public ResponseEntity<Subtask> markSubtask(
-            @PathVariable Long id, 
-            @RequestBody boolean isCompleted,
-            Authentication authentication
+        @PathVariable Long id, 
+        @RequestBody boolean isCompleted,
+        Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
@@ -66,9 +69,9 @@ public class SubtaskController
 
     @PutMapping("/{id}")
     public ResponseEntity<Subtask> updateSubtask(
-            @PathVariable Long id, 
-            @RequestBody SubtaskRequest subtask,
-            Authentication authentication
+        @PathVariable Long id, 
+        @RequestBody SubtaskRequest subtask,
+        Authentication authentication
     ) {
         return ResponseEntity
                 .ok()
@@ -80,9 +83,9 @@ public class SubtaskController
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSubtask(
-            Authentication authentication,
-            @PathVariable Long id
+    public ResponseEntity<Void> deleteSubtask(
+        Authentication authentication,
+        @PathVariable Long id
     ) {
         subtaskService.deleteSubtask(id, authentication);
         return ResponseEntity

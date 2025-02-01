@@ -1,4 +1,4 @@
-package io.tasks_tracker.task.dto;
+package io.tasks_tracker.task.dto.task;
 
 import java.time.LocalDateTime;
 

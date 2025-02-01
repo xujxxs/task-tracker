@@ -31,9 +31,9 @@ public class CacheConfig
 
     @Bean
     public RedisCacheManager cacheManager(
-                RedisConnectionFactory redisConnectionFactory,
-                TaskProtoSerializer taskProtoSerializer,
-                SubtaskProtoSerializer subtaskProtoSerializer
+        RedisConnectionFactory redisConnectionFactory,
+        TaskProtoSerializer taskProtoSerializer,
+        SubtaskProtoSerializer subtaskProtoSerializer
     ) {
         RedisCacheConfiguration taskCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeValuesWith(

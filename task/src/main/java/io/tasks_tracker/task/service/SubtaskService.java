@@ -1,14 +1,13 @@
 package io.tasks_tracker.task.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import io.tasks_tracker.task.dto.SubtaskCreateRequest;
-import io.tasks_tracker.task.dto.SubtaskRequest;
+import io.tasks_tracker.task.dto.subtask.SubtaskCreateRequest;
+import io.tasks_tracker.task.dto.subtask.SubtaskRequest;
 import io.tasks_tracker.task.entity.Subtask;
 import io.tasks_tracker.task.entity.Task;
 import io.tasks_tracker.task.exception.NoAccessException;
@@ -19,17 +18,25 @@ import io.tasks_tracker.task.repository.TaskRepository;
 @Service
 public class SubtaskService 
 {
-    @Autowired
-    private CacheService cacheService;
+    private final AuthenticationService authenticationService;
+    private final CacheService cacheService;
+    private final TaskService taskService;
+    private final SubtaskRepository subtaskRepository;
+    private final TaskRepository taskRepository;
 
-    @Autowired
-    private TaskService taskService;
-
-    @Autowired
-    private SubtaskRepository subtaskRepository;
-
-    @Autowired
-    private TaskRepository taskRepository;
+    public SubtaskService(
+        AuthenticationService authenticationService,
+        CacheService cacheService,
+        TaskService taskService,
+        SubtaskRepository subtaskRepository,
+        TaskRepository taskRepository
+    ) {
+        this.authenticationService = authenticationService;
+        this.cacheService = cacheService;
+        this.taskService = taskService;
+        this.subtaskRepository = subtaskRepository;
+        this.taskRepository = taskRepository;
+    }
 
     @Cacheable(value = "subtasks", key = "#id")
     public Subtask getSubtask(
@@ -53,7 +60,7 @@ public class SubtaskService
         Subtask newSubtask = new Subtask();
         newSubtask.setTitle(subtask.getSubtask().getTitle());
         newSubtask.setCompleted(subtask.getSubtask().isCompleted());
-        newSubtask.setCreatedBy(taskService.getUserId(authentication));
+        newSubtask.setCreatedBy(authenticationService.getUserId(authentication));
 
         Task task = taskService.getTask( 
             authentication,

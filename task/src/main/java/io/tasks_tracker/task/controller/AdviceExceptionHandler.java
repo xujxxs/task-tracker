@@ -9,7 +9,7 @@ import io.tasks_tracker.task.exception.NoAccessException;
 import io.tasks_tracker.task.exception.NotFoundException;
 
 @RestControllerAdvice
-public class AdviceException 
+public class AdviceExceptionHandler 
 {
     @ExceptionHandler(NoAccessException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)

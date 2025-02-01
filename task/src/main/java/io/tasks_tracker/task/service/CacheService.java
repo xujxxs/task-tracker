@@ -2,7 +2,6 @@ package io.tasks_tracker.task.service;
 
 import java.time.LocalDateTime;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,11 +16,16 @@ import io.tasks_tracker.task.repository.TaskRepository;
 @Service
 public class CacheService 
 {
-    @Autowired
-    private TaskRepository taskRepository;
+    private final TaskRepository taskRepository;
+    private final SubtaskRepository subtaskRepository;
 
-    @Autowired
-    private SubtaskRepository subtaskRepository;
+    public CacheService(
+        TaskRepository taskRepository,
+        SubtaskRepository subtaskRepository
+    ) {
+        this.taskRepository = taskRepository;
+        this.subtaskRepository = subtaskRepository;
+    }
    
     @Cacheable(value = "tasks", key = "#id")
     public Task getTaskById(Long id)
@@ -38,10 +42,18 @@ public class CacheService
     }
 
     @CacheEvict(value = "tasks", key = "#task.id") 
-    public void evictTaskFromCache(Task task) { }
+    public void evictTaskFromCache(Task task) { 
+        /*
+         * This method is needed to remove task from cache.
+         */
+    }
 
     @CacheEvict(value = "subtasks", key = "#subtask.id")
-    public void evictSubtaskFromCache(Subtask subtask) { }
+    public void evictSubtaskFromCache(Subtask subtask) { 
+        /*
+         * This method is needed to remove subtask from cache.
+         */
+    }
 
     public Task checkOnCacheInSubtask(Task task)
     {
@@ -53,7 +65,6 @@ public class CacheService
     @CachePut(value = "tasks", key = "#task.id")
     public Task updateTaskCompletionStatus(Task task) 
     {
-        System.out.println(task.getSubtasks().size());
         if(!task.getSubtasks().isEmpty()
                 && task.getSubtasks().stream().allMatch(Subtask::isCompleted)) {
             task.setEndedAt(LocalDateTime.now());

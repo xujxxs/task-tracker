@@ -1,8 +1,5 @@
 package io.tasks_tracker.task.service;
 
-import java.time.LocalDateTime;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -14,8 +11,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import io.tasks_tracker.task.dto.TaskCreateRequest;
-import io.tasks_tracker.task.dto.TaskRequest;
+import io.tasks_tracker.task.dto.filter.PaginationParams;
+import io.tasks_tracker.task.dto.filter.TaskFilterParams;
+import io.tasks_tracker.task.dto.task.TaskCreateRequest;
+import io.tasks_tracker.task.dto.task.TaskRequest;
 import io.tasks_tracker.task.entity.Subtask;
 import io.tasks_tracker.task.entity.Task;
 import io.tasks_tracker.task.exception.NoAccessException;
@@ -27,23 +26,26 @@ import io.tasks_tracker.task.specification.TaskSpecification;
 @Service
 public class TaskService 
 {
-    @Autowired
-    private CacheService cacheService;
+    private final AuthenticationService authenticationService;
+    private final CacheService cacheService;
+    private final TaskRepository taskRepository;
+    private final SubtaskRepository subtaskRepository;
 
-    @Autowired
-    private TaskRepository taskRepository;
-
-    @Autowired
-    private SubtaskRepository subtaskRepository;
-
-    public Long getUserId(Authentication authentication)
-    {
-        return (Long) authentication.getDetails();
+    public TaskService(
+        AuthenticationService authenticationService,
+        CacheService cacheService,
+        TaskRepository taskRepository,
+        SubtaskRepository subtaskRepository
+    ) {
+        this.authenticationService = authenticationService;
+        this.cacheService = cacheService;
+        this.taskRepository = taskRepository;
+        this.subtaskRepository = subtaskRepository;
     }
 
     public boolean hasAccess(Task task, Authentication authentication)
     {
-        return task.getCreatedBy().equals(getUserId(authentication))
+        return task.getCreatedBy().equals(authenticationService.getUserId(authentication))
                 || authentication.getAuthorities()
                     .stream()
                     .anyMatch(role -> role.getAuthority().equals("ADMIN"));
@@ -51,8 +53,8 @@ public class TaskService
 
     @Cacheable(value = "tasks", key = "#id")
     public Task getTask(
-            Authentication authentication,
-            Long id
+        Authentication authentication,
+        Long id
     ) throws NotFoundException, NoAccessException 
     {
         Task task = cacheService.getTaskById(id);
@@ -63,52 +65,49 @@ public class TaskService
         return task;
     }
 
-    public Page<Task> getTaskByPage(
-            int pageNum, 
-            int pageSize, 
-            String sortBy,
-            String sortOrder,
-            String title, 
-            String category, 
-            LocalDateTime equalDateEnd,
-            LocalDateTime minDateEnd,
-            LocalDateTime maxDateEnd,
-            boolean isNotHaveEnded,
-            LocalDateTime equalDateCreated,
-            LocalDateTime minDateCreated,
-            LocalDateTime maxDateCreated,
-            LocalDateTime equalDateUpdated,
-            LocalDateTime minDateUpdated,
-            LocalDateTime maxDateUpdated,
-            LocalDateTime equalDateEnded,
-            LocalDateTime minDateEnded,
-            LocalDateTime maxDateEnded,
-            boolean isNotCompleted,
-            Long equalToImportance,
-            Long greaterThanOrEqualToImportance,
-            Long lessThanOrEqualToImportance,
-            Long userId
+    public Page<Task> getTasks(
+        PaginationParams pagination, 
+        TaskFilterParams filters
     ) {
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, 
-            sortOrder.equalsIgnoreCase("asc") 
-            ? Sort.by(sortBy).ascending() 
-            : Sort.by(sortBy).descending());
+        Pageable page = PageRequest.of(
+            pagination.getPageNumber() - 1, 
+            pagination.getPageSize(), 
+            pagination.getSortOrder().equalsIgnoreCase("asc") 
+                ? Sort.by(pagination.getSortBy()).ascending() 
+                : Sort.by(pagination.getSortBy()).descending());
 
-        Specification<Task> specification = Specification.where(TaskSpecification.filterByTitle(title))
-                .and(TaskSpecification.filterByCategory(category))
-                .and(TaskSpecification.filterByDateEnd(equalDateEnd, minDateEnd, maxDateEnd, isNotHaveEnded))
-                .and(TaskSpecification.filterByCreated(equalDateCreated, minDateCreated, maxDateCreated))
-                .and(TaskSpecification.filterByUpdated(equalDateUpdated, minDateUpdated, maxDateUpdated))
-                .and(TaskSpecification.filterByEnded(equalDateEnded, minDateEnded, maxDateEnded, isNotCompleted))
-                .and(TaskSpecification.filterByImportance(equalToImportance, greaterThanOrEqualToImportance, lessThanOrEqualToImportance))
-                .and(TaskSpecification.filterByCreatedBy(userId));
-        
-        return taskRepository.findAll(specification, pageable);
+        Specification<Task> spec = Specification.where(TaskSpecification.filterByTitle(filters.getTitle()))
+            .and(TaskSpecification.filterByCategory(filters.getCategory()))
+            .and(TaskSpecification.filterByDateEnd(
+                filters.getDateEnd().getEqual(), 
+                filters.getDateEnd().getMin(),
+                filters.getDateEnd().getMax(),
+                filters.isNotHaveEnded()))
+            .and(TaskSpecification.filterByCreated(
+                filters.getDateCreated().getEqual(), 
+                filters.getDateCreated().getMin(),
+                filters.getDateCreated().getMax()))
+            .and(TaskSpecification.filterByUpdated(
+                filters.getDateUpdated().getEqual(), 
+                filters.getDateUpdated().getMin(),
+                filters.getDateUpdated().getMax()))
+            .and(TaskSpecification.filterByEnded(
+                filters.getDateEnded().getEqual(), 
+                filters.getDateEnded().getMin(),
+                filters.getDateEnded().getMax(),
+                filters.isNotCompleted()))
+            .and(TaskSpecification.filterByImportance(
+                filters.getImportance().getEqual(), 
+                filters.getImportance().getGreaterOrEqual(),
+                filters.getImportance().getLessOrEqual()))
+            .and(TaskSpecification.filterByCreatedBy(filters.getUserId()));
+
+        return taskRepository.findAll(spec, page);
     }
 
     public Task createTask(
-            TaskCreateRequest taskRequest, 
-            Long userId
+        TaskCreateRequest taskRequest, 
+        Long userId
     ) {
         Task task = new Task();
         task.setTitle(taskRequest.getTask().getTitle());
@@ -133,9 +132,9 @@ public class TaskService
 
     @CachePut(value = "tasks", key = "#id")
     public Task updateTask(
-            Long id, 
-            TaskRequest taskRequest, 
-            Authentication authentication
+        Long id, 
+        TaskRequest taskRequest, 
+        Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
         Task taskUpdate = getTask(authentication, id);
@@ -150,8 +149,8 @@ public class TaskService
 
     @CacheEvict(value = "tasks", key = "#id")
     public void deleteTask(
-            Authentication authentication,
-            Long id
+        Authentication authentication,
+        Long id
     ) throws NotFoundException, NoAccessException 
     {
         Task task = getTask(authentication, id);
