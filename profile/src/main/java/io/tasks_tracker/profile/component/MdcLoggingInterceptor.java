@@ -32,10 +32,12 @@ public class MdcLoggingInterceptor extends OncePerRequestFilter
             FilterChain filterChain
     ) throws ServletException, IOException 
     {
-
         MDC.put("requestId", UUID.randomUUID().toString());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication != null && authentication.isAuthenticated()){
+        
+        if(authentication != null && authentication.isAuthenticated()
+            && authentication.getPrincipal() instanceof Long
+        ) {
             MDC.put("userId", authenticationService.getUserId(authentication).toString());
         }
 
