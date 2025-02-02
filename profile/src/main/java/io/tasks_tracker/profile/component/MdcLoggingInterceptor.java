@@ -36,7 +36,7 @@ public class MdcLoggingInterceptor extends OncePerRequestFilter
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if(authentication != null && authentication.isAuthenticated()
-            && authentication.getPrincipal() instanceof Long
+            && authentication.getDetails() instanceof Long
         ) {
             MDC.put("userId", authenticationService.getUserId(authentication).toString());
         }
