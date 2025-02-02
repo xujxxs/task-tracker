@@ -53,7 +53,7 @@ public class AuthenticationService
 
     public Long getUserId(Authentication authentication)
     {
-        log.debug("Getting user id for authentication: {}", authentication.getName());
+        log.trace("Getting user id for authentication: {}", authentication.getName());
         return (Long) authentication.getDetails();
     }
 
