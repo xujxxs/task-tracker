@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import io.tasks_tracker.task.exception.NoAccessException;
 import io.tasks_tracker.task.exception.NotFoundException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestControllerAdvice
 public class AdviceExceptionHandler 
 {
@@ -15,6 +17,7 @@ public class AdviceExceptionHandler
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public String noAccessException(NoAccessException ex)
     {
+        log.warn("Access denied: {}", ex.getMessage());
         return ex.getMessage();
     }
 
@@ -22,6 +25,14 @@ public class AdviceExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String notFoundException(NotFoundException ex)
     {
+        log.warn("Resource not found: {}", ex.getMessage());
         return ex.getMessage();
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public String handleAllExceptions(Exception ex) {
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        return "Internal server error";
     }
 }

@@ -11,6 +11,7 @@ import io.tasks_tracker.task.dto.task.TaskRequest;
 import io.tasks_tracker.task.entity.Task;
 import io.tasks_tracker.task.service.AuthenticationService;
 import io.tasks_tracker.task.service.TaskService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController 
@@ -70,24 +72,26 @@ public class TaskController
         @RequestParam(required = false) Long greaterThanOrEqualToImportance,
         @RequestParam(required = false) Long lessThanOrEqualToImportance
     ) {
+        log.info("Initialing fetching task page by filters");
         DateFilterParams dateEnd = new DateFilterParams(equalDateEnd, minDateEnd, maxDateEnd);
         DateFilterParams dateCreated = new DateFilterParams(equalDateCreated, minDateCreated, maxDateCreated);
         DateFilterParams dateUpdated = new DateFilterParams(equalDateUpdated, minDateUpdated, maxDateUpdated);
         DateFilterParams dateEnded = new DateFilterParams(equalDateEnded, minDateEnded, maxDateEnded);
         ImportanceFilterParams importance = new ImportanceFilterParams(equalToImportance, greaterThanOrEqualToImportance, lessThanOrEqualToImportance);
 
+        PaginationParams paginationParams = new PaginationParams(pageNumber, pageSize, sortOrder, sortBy);
+        TaskFilterParams filterParams = new TaskFilterParams(
+            title, category, dateEnd, isNotHaveEnded, 
+            dateCreated, dateUpdated, dateEnded, isNotCompleted, 
+            importance, authenticationService.getUserId(authentication)
+        );
+        log.debug("With pagination params: {}, filter params: {}", paginationParams, filterParams);
+        Page<Task> pageTask = taskService.getTasks(paginationParams, filterParams);
+
+        log.debug("Fetching task page successfully");
         return ResponseEntity
                 .ok()
-                .body(taskService.getTasks(
-                    new PaginationParams(
-                        pageNumber, pageSize, sortOrder, sortBy
-                    ),
-                    new TaskFilterParams(
-                        title, category, dateEnd, isNotHaveEnded, 
-                        dateCreated, dateUpdated, dateEnded, isNotCompleted, 
-                        importance, authenticationService.getUserId(authentication)
-                    )
-        ));
+                .body(pageTask);
     }
 
     @GetMapping("/{id}")
@@ -95,9 +99,13 @@ public class TaskController
         Authentication authentication,
         @PathVariable Long id
     ) {
+        log.info("Initialing fetching task by id: {}", id);
+        Task task = taskService.getTask(authentication, id);
+        
+        log.debug("Task fetchind successfully by id: {}", id);
         return ResponseEntity
                 .ok()
-                .body(taskService.getTask(authentication, id));
+                .body(task);
     }
     
     @PostMapping
@@ -105,7 +113,10 @@ public class TaskController
         Authentication authentication,
         @RequestBody TaskCreateRequest entity
     ) {
+        log.info("Initialing create task");
         Task newTask = taskService.createTask(entity, authenticationService.getUserId(authentication));
+        
+        log.debug("Create task successfully, task id: {}", newTask.getId());
         return ResponseEntity
                 .created(URI.create("/tasks/" + newTask.getId().toString()))
                 .body(newTask);
@@ -117,13 +128,13 @@ public class TaskController
         @PathVariable Long id, 
         @RequestBody TaskRequest entity
     ) {
+        log.info("Initialing update task: {}", id);
+        Task task = taskService.updateTask(id, entity, authentication);
+        
+        log.debug("Update successfully for task: {}", id);
         return ResponseEntity
                 .ok()
-                .body(taskService.updateTask(
-                    id, 
-                    entity, 
-                    authentication
-        ));
+                .body(task);
     }
 
     @DeleteMapping("/{id}")
@@ -131,7 +142,10 @@ public class TaskController
         Authentication authentication,
         @PathVariable Long id
     ) {
+        log.info("Initialing delete task: {}", id);
         taskService.deleteTask(authentication, id);
+        
+        log.debug("Delete successfully for task: {}", id);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
