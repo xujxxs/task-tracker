@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.slf4j.MDC;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import io.tasks_tracker.task.service.AuthenticationService;
@@ -14,6 +15,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Component
 public class MdcLoggingInterceptor extends OncePerRequestFilter 
 {
     private final AuthenticationService authenticationService;
