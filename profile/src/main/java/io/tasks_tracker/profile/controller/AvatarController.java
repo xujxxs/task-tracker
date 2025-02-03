@@ -22,7 +22,9 @@ import io.tasks_tracker.profile.exception.NoAccessException;
 import io.tasks_tracker.profile.service.AuthenticationService;
 import io.tasks_tracker.profile.service.ProfileService;
 import io.tasks_tracker.profile.service.S3StorageService;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/profile")
 public class AvatarController 
@@ -44,8 +46,11 @@ public class AvatarController
     @GetMapping("/avatar")
     public ResponseEntity<InputStreamResource> getAvatar(Authentication authentication) 
     {
-        User user = profileService.getProfileWithOutCache(authenticationService.getUserId(authentication));
-
+        Long userId = authenticationService.getUserId(authentication);
+        log.info("Initiating fetching self avatar for user: {}", userId);
+        User user = profileService.getProfileWithOutCache(userId);
+        
+        log.debug("Self avatar fetched, file name: {}", user.getAvatarLink());
         return ResponseEntity
                 .ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + user.getAvatarLink())
@@ -59,11 +64,16 @@ public class AvatarController
         Authentication authentication
     ) throws IOException
     {
+        Long userId = authenticationService.getUserId(authentication);
+        log.info("Initiating uploading self avatar for user: {}", userId);
+        log.debug("File info: {} ({} bytes)", file.getOriginalFilename(), file.getSize());
+        
         s3StorageService.uploadAvatar(
             file,
-            profileService.getProfileWithOutCache(authenticationService.getUserId(authentication))
+            profileService.getProfileWithOutCache(userId)
         );
         
+        log.info("Self avatar uploaded successfully for user: {}", userId);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .build();
@@ -72,10 +82,14 @@ public class AvatarController
     @DeleteMapping("/avatar")
     public ResponseEntity<Void> deleteAvatar(Authentication authentication)
     {
+        Long userId = authenticationService.getUserId(authentication);
+        log.info("Initiating deleting self avatar for user: {}", userId);
+        
         s3StorageService.deleteAvatar(
-            profileService.getProfileWithOutCache(authenticationService.getUserId(authentication))
+            profileService.getProfileWithOutCache(userId)
         );
-
+        
+        log.info("Self avatar deleted successfully for user: {}", userId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
@@ -86,11 +100,15 @@ public class AvatarController
         @PathVariable Long id,
         Authentication authentication
     ) {
+        Long requesterId = authenticationService.getUserId(authentication);
+        log.info("Initiating fetching avatar for user: {} by user: {}", id, requesterId);
+
         User user = profileService.getProfileWithOutCache(id);
         if(!profileService.hasAccess(authentication, user)) {
             throw new NoAccessException("user", user.getId());
         }
 
+        log.debug("Avatar fetched, file name: {}", user.getAvatarLink());
         return ResponseEntity
                 .ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + user.getAvatarLink())
@@ -105,13 +123,18 @@ public class AvatarController
         Authentication authentication
     ) throws IOException
     {
+        Long requesterId = authenticationService.getUserId(authentication);
+        log.info("Initiating uploading avatar for user: {} by user: {}", id, requesterId);
+
         User user = profileService.getProfileWithOutCache(id);
         if(!profileService.hasAccess(authentication, user)) {
             throw new NoAccessException("user", user.getId());
         }
 
+        log.debug("Processing file: {} ({} bytes)", file.getOriginalFilename(), file.getSize());
         s3StorageService.uploadAvatar(file, user);
         
+        log.info("Avatar update completed for user: {} by user: {}", id, requesterId);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .build();
@@ -122,6 +145,9 @@ public class AvatarController
         @PathVariable Long id,
         Authentication authentication
     ) {
+        Long requesterId = authenticationService.getUserId(authentication);
+        log.warn("Initiating avatar deletion for user: {} by user: {}", id, requesterId);
+
         User user = profileService.getProfileWithOutCache(id);
         if(!profileService.hasAccess(authentication, user)) {
             throw new NoAccessException("user", user.getId());
@@ -129,6 +155,7 @@ public class AvatarController
 
         s3StorageService.deleteAvatar(user);
 
+        log.info("Avatar deleted for user: {} by user: {}", id, requesterId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();

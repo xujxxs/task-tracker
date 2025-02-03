@@ -9,6 +9,7 @@ import io.tasks_tracker.profile.entity.User;
 import io.tasks_tracker.profile.service.AuthenticationService;
 import io.tasks_tracker.profile.service.ProfileService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/profile")
 public class ProfileController 
@@ -42,9 +44,14 @@ public class ProfileController
     @GetMapping
     public ResponseEntity<User> getProfile(Authentication authentication) 
     {
+        Long userId = authenticationService.getUserId(authentication);
+        log.info("Initiating fetching self profile");
+        User user = profileService.getProfile(userId);
+
+        log.debug("Fetching self profile successfully for user: {}", userId);
         return ResponseEntity
                 .ok()
-                .body(profileService.getProfile(authenticationService.getUserId(authentication)));
+                .body(user);
     }
     
     @PutMapping
@@ -52,11 +59,14 @@ public class ProfileController
         @RequestBody UpdateProfileRequest request,
         Authentication authentication
     ) {
+        Long userId = authenticationService.getUserId(authentication);
+        log.info("Initiating profile update by user: {}", userId);
+        User user = profileService.updateProfileById(request, authentication, userId);
+
+        log.debug("Profile updated successfully for user: {}", userId);
         return ResponseEntity
                 .ok()
-                .body(profileService.updateProfileById(
-                    request, authentication, authenticationService.getUserId(authentication)
-                ));
+                .body(user);
     }
 
     @DeleteMapping
@@ -64,14 +74,21 @@ public class ProfileController
         Authentication authentication,
         HttpServletRequest request
     ) {
+        Long userId = authenticationService.getUserId(authentication);
+        log.info("Initiating account deletion by user: {}", userId);
+
+        log.info("Sending user deletion event for user: {}", userId);
         rabbitTemplate.convertAndSend(
             RabbitMQConfig.EXCHANGE_NAME, 
             "user.delete", 
             authenticationService.getUserId(authentication)
         );
         
+        log.debug("Terminating all sessions");
         authenticationService.logoutAll(authentication, request);
-        profileService.deleteProfileById(authentication, authenticationService.getUserId(authentication));
+        profileService.deleteProfileById(authentication, userId);
+
+        log.info("User account: {} permanently deleted", userId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
@@ -82,9 +99,14 @@ public class ProfileController
         @PathVariable Long id,
         Authentication authentication
     ) {
+        Long requesterId = authenticationService.getUserId(authentication);
+        log.info("Fetching profile user: {} initiated by user: {}", id, requesterId);
+        User user = profileService.getProfileById(authentication, id);
+
+        log.debug("Profile data retrieved for user: {}", id);
         return ResponseEntity
                 .ok()
-                .body(profileService.getProfileById(authentication, id));
+                .body(user);
     }
     
     @PutMapping("/{id}")
@@ -93,13 +115,14 @@ public class ProfileController
         @RequestBody UpdateProfileRequest request,
         Authentication authentication
     ) {
+        Long requesterId = authenticationService.getUserId(authentication);
+        log.info("Profile update initiated by: {} for user: {}", requesterId, id);
+        User updatedUser = profileService.updateProfileById(request, authentication, id);
+
+        log.info("Profile user: {} updated by user: {}", id, requesterId);
         return ResponseEntity
                 .ok()
-                .body(profileService.updateProfileById(
-                    request, 
-                    authentication, 
-                    authenticationService.getUserId(authentication)
-                ));
+                .body(updatedUser);
     }
 
     @DeleteMapping("/{id}")
@@ -108,18 +131,25 @@ public class ProfileController
         Authentication authentication,
         HttpServletRequest request
     ) {
+        Long requesterId = authenticationService.getUserId(authentication);
+        log.info("User deletion initiated by: {} for user: {}", requesterId, id);
+
         User userToDelete = profileService.getProfileById(authentication, id);
+        log.info("Sending deletion event for user: {}", id);
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.delete", id);
         
         if(userToDelete.getUsername().equals(authentication.getName())) {
+            log.info("Self-deletion detected, terminating sessions for user: {}", id);
             authenticationService.logoutAll(authentication, request);
         }
         else {
+            log.debug("Terminating all sessions for user: {}", id);
             authenticationService.deleteAllSessions(userToDelete.getUsername());
         }
 
         profileService.deleteProfileById(authentication, id);
 
+        log.info("User account: {} permanently deleted by user: {}", id, requesterId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
