@@ -22,7 +22,9 @@ import io.tasks_tracker.task.exception.NotFoundException;
 import io.tasks_tracker.task.repository.SubtaskRepository;
 import io.tasks_tracker.task.repository.TaskRepository;
 import io.tasks_tracker.task.specification.TaskSpecification;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class TaskService 
 {
@@ -45,23 +47,33 @@ public class TaskService
 
     public boolean hasAccess(Task task, Authentication authentication)
     {
-        return task.getCreatedBy().equals(authenticationService.getUserId(authentication))
+        Long userIdWantAccess = authenticationService.getUserId(authentication);
+        boolean hasAccess = task.getCreatedBy().equals(userIdWantAccess)
                 || authentication.getAuthorities()
                     .stream()
                     .anyMatch(role -> role.getAuthority().equals("ADMIN"));
+        
+        if(hasAccess) {
+            log.debug("Access granted: User: {} have access to task: {}", userIdWantAccess, task.getId());
+            return true;
+        }
+        log.warn("Access denied: User: {} not have access to task: {}", userIdWantAccess, task.getId());
+        return false;
     }
 
     @Cacheable(value = "tasks", key = "#id")
     public Task getTask(
         Authentication authentication,
         Long id
-    ) throws NotFoundException, NoAccessException 
-    {
+    ) {
+        log.info("Starting fetch task: {}", id);
         Task task = cacheService.getTaskById(id);
         
         if(!hasAccess(task, authentication)) {
             throw new NoAccessException("task", id);
         }
+
+        log.info("Fetch task: {} successfully", id);
         return task;
     }
 
@@ -69,6 +81,7 @@ public class TaskService
         PaginationParams pagination, 
         TaskFilterParams filters
     ) {
+        log.info("Starting fetch page tasks by pagination filter: {} and param filter: {}", pagination, filters);
         Pageable page = PageRequest.of(
             pagination.getPageNumber() - 1, 
             pagination.getPageSize(), 
@@ -102,13 +115,17 @@ public class TaskService
                 filters.getImportance().getLessOrEqual()))
             .and(TaskSpecification.filterByCreatedBy(filters.getUserId()));
 
-        return taskRepository.findAll(spec, page);
+        Page<Task> pageTask = taskRepository.findAll(spec, page);
+        log.info("Fetch page tasks by filters successfully");
+        return pageTask;
     }
 
     public Task createTask(
         TaskCreateRequest taskRequest, 
         Long userId
     ) {
+        log.info("Starting create task with {} subtasks", taskRequest.getSubtasks().size());
+
         Task task = new Task();
         task.setTitle(taskRequest.getTask().getTitle());
         task.setDescription(taskRequest.getTask().getDescription());
@@ -118,6 +135,8 @@ public class TaskService
         task.setCreatedBy(userId);
 
         Task savedTask = taskRepository.save(task);
+        log.debug("Starting linking a task: {} with {} subtasks", 
+            savedTask.getId(), taskRequest.getSubtasks().size());
         taskRequest.getSubtasks().forEach(requestSubtask -> {
             Subtask subtask = new Subtask();
             subtask.setTitle(requestSubtask.getTitle());
@@ -126,8 +145,10 @@ public class TaskService
             subtask.setTask(savedTask);
             savedTask.addSubtask(subtaskRepository.save(subtask));
         });
+        Task createdTask = taskRepository.save(cacheService.updateTaskCompletionStatus(savedTask));
 
-        return taskRepository.save(cacheService.updateTaskCompletionStatus(savedTask));
+        log.info("Task: {} created successfully", createdTask.getId());
+        return createdTask;
     }
 
     @CachePut(value = "tasks", key = "#id")
@@ -137,6 +158,8 @@ public class TaskService
         Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
+        log.info("Starting update task: {}", id);
+
         Task taskUpdate = getTask(authentication, id);
         taskUpdate.setTitle(taskRequest.getTitle());
         taskUpdate.setDescription(taskRequest.getDescription());
@@ -144,7 +167,10 @@ public class TaskService
         taskUpdate.setDateEnd(taskRequest.getDateEnd());
         taskUpdate.setImportance(taskRequest.getImportance());
         
-        return taskRepository.save(cacheService.updateTaskCompletionStatus(taskUpdate));
+        Task task = taskRepository.save(cacheService.updateTaskCompletionStatus(taskUpdate));
+
+        log.info("Update task: {} successfully", id);
+        return task;
     }
 
     @CacheEvict(value = "tasks", key = "#id")
@@ -153,8 +179,14 @@ public class TaskService
         Long id
     ) throws NotFoundException, NoAccessException 
     {
+        log.info("Starting delete task: {}", id);
+
         Task task = getTask(authentication, id);
+
+        log.debug("Delete all subtask({}) linked with task: {}", task.getSubtasks().size(), id);
         task.getSubtasks().forEach(subtask -> cacheService.evictSubtaskFromCache(subtask));
         taskRepository.delete(task);
+
+        log.info("Delete task: {} successfully", id);
     }
 }

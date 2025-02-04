@@ -14,7 +14,9 @@ import io.tasks_tracker.task.exception.NoAccessException;
 import io.tasks_tracker.task.exception.NotFoundException;
 import io.tasks_tracker.task.repository.SubtaskRepository;
 import io.tasks_tracker.task.repository.TaskRepository;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class SubtaskService 
 {
@@ -44,11 +46,14 @@ public class SubtaskService
             Long id
     ) throws NotFoundException, NoAccessException
     {
+        log.info("Starting fetch subtask: {}", id);
         Subtask subtask = cacheService.getSubtaskById(id);
 
         if(!taskService.hasAccess(subtask.getTask(), authentication)) {
             throw new NoAccessException("subtask", id);
         }
+
+        log.info("Fetch subtask: {} successfully", id);
         return subtask;
     }
 
@@ -57,11 +62,14 @@ public class SubtaskService
             Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
+        log.info("Starting create subtask");
+
         Subtask newSubtask = new Subtask();
         newSubtask.setTitle(subtask.getSubtask().getTitle());
         newSubtask.setCompleted(subtask.getSubtask().isCompleted());
         newSubtask.setCreatedBy(authenticationService.getUserId(authentication));
 
+        log.debug("Link subtask with task: {}", subtask.getTaskId());
         Task task = taskService.getTask( 
             authentication,
             subtask.getTaskId()
@@ -72,6 +80,8 @@ public class SubtaskService
         task.addSubtask(savedSubtask);
     
         cacheService.updateTaskCompletionStatus(task);
+
+        log.info("Create subtask successfully, id: {}", savedSubtask.getId());
         return savedSubtask;
     }
 
@@ -82,11 +92,17 @@ public class SubtaskService
             Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
+        log.info("Starting mark subtask: {}", id);
+
         Subtask subtask = getSubtask(authentication, id);
         subtask.setCompleted(isCompleted);
         
         Subtask resSubtask = subtaskRepository.save(subtask);
+        log.debug("Subtask {} updated successfully", id);
+
         cacheService.updateTaskCompletionStatus(cacheService.checkOnCacheInSubtask(resSubtask.getTask()));
+        
+        log.info("Mark subtask: {} successfully", id);
         return resSubtask;
     }
 
@@ -97,12 +113,18 @@ public class SubtaskService
             Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
+        log.info("Starting update subtask: {}", id);
+
         Subtask updateSubtask = getSubtask(authentication, id);
         updateSubtask.setTitle(subtask.getTitle());
         updateSubtask.setCompleted(subtask.isCompleted());
 
         Subtask resSubtask = subtaskRepository.save(updateSubtask);
+        log.debug("Subtask {} updated successfully", id);
+
         cacheService.updateTaskCompletionStatus(cacheService.checkOnCacheInSubtask(resSubtask.getTask()));
+
+        log.info("Update subtask: {} successfully", id);
         return resSubtask;
     }
 
@@ -112,10 +134,17 @@ public class SubtaskService
             Authentication authentication
     ) throws NotFoundException, NoAccessException 
     {
+        log.info("Starting delete subtask: {}", id);
+
         Subtask subtask = getSubtask(authentication, id);
         Task task = cacheService.getTaskById(subtask.getTask().getId());
+
+        log.debug("Remove subtask: {} from task: {}", id, task.getId());
         task.removeSubtask(subtask);
         taskRepository.save(task);
+        log.debug("Subtask: {} was deleted and removed from task: {} successfully. ", id, task.getId());
         cacheService.updateTaskCompletionStatus(task);
+
+        log.info("Delete subtask: {} successfully", id);
     }
 }

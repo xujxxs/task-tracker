@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import io.tasks_tracker.task.config.RabbitMQConfig;
 import io.tasks_tracker.task.entity.Task;
 import io.tasks_tracker.task.repository.TaskRepository;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class RabbitMQListener 
 {
@@ -31,18 +33,29 @@ public class RabbitMQListener
     @RabbitListener(queues = RabbitMQConfig.DELETE_QUEUE_NAME)
     public void handlerUserDelete(Long userId)
     {
-        while(true)
+        log.info("Starting deletion of all tasks created by user: {}", userId);
+
+        for(Long iteration = Long.valueOf(0); true; ++iteration)
         {
+            log.debug("Iteration {}: Fetching tasks page with size: {}", iteration, PAGE_SIZE);
             List<Task> tasks = taskRepository.findByCreatedBy(userId, PageRequest.of(0, PAGE_SIZE));
+            log.debug("Found {} tasks in iteration {}", tasks.size(), iteration);
 
             if(tasks.isEmpty()) {
+                log.debug("Empty list at iteration {}", iteration);
                 break;
             }
 
-            tasks.forEach(task -> cacheService.evictTaskFromCache(task));
-            tasks.forEach(task -> task.getSubtasks().forEach(subtasks -> cacheService.evictSubtaskFromCache(subtasks)));
+            log.debug("Evicting {} tasks and linked subtasks", tasks.size());
+            tasks.forEach(task -> {
+                cacheService.evictTaskFromCache(task);
+                task.getSubtasks().forEach(cacheService::evictSubtaskFromCache);
+            });
 
+            log.info("Deleting tasks from database in iteration {}", iteration);
             taskRepository.deleteAll(tasks);
+            log.debug("Iteration {} completed; tasks deleted.", iteration);
         }
+        log.info("Deletion of all tasks created by user {} completed successfully.", userId);
     }
 }
