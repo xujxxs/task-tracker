@@ -43,23 +43,23 @@ public class SubtaskProtoSerializer implements RedisSerializer<Subtask>
 
     public Task toMinTask(ProtoEntityTypes.Task proto)
     {
-        Task task = new Task();
-        task.setId(proto.getId());
-        task.setCreatedBy(proto.getCreatedBy());
-        return task;
+        return Task.builder()
+                .id(proto.getId())
+                .createdBy(proto.getCreatedBy())
+            .build();
     }
 
     public Subtask toSubtask(ProtoEntityTypes.Subtask proto)
     {
-        Subtask subtask = new Subtask();
-        subtask.setId(proto.getId());
-        subtask.setTitle(proto.getTitle());
-        subtask.setCompleted(proto.getIsCompleted());
-        subtask.setCreatedBy(proto.getCreatedBy());
-        subtask.setCreatedAt(LocalDateTime.parse(proto.getCreatedAt()));
-        subtask.setRedactedAt(proto.getRedactedAt() == "" ? null : LocalDateTime.parse(proto.getRedactedAt()));
-        subtask.setTask(toMinTask(proto.getTask()));
-        return subtask;
+        return Subtask.builder()
+                .id(proto.getId())
+                .title(proto.getTitle())
+                .isCompleted(proto.getIsCompleted())
+                .createdBy(proto.getCreatedBy())
+                .createdAt(LocalDateTime.parse(proto.getCreatedAt()))
+                .redactedAt(proto.getRedactedAt() == "" ? null : LocalDateTime.parse(proto.getRedactedAt()))
+                .task(toMinTask(proto.getTask()))
+            .build();
     }
 
     @Override

@@ -124,27 +124,34 @@ public class TaskService
         TaskCreateRequest taskRequest, 
         Long userId
     ) {
-        log.info("Starting create task with {} subtasks", taskRequest.getSubtasks().size());
+        long countSubtasks = taskRequest.getSubtasks() != null ? taskRequest.getSubtasks().size() : 0;
+        log.info("Starting create task with {} subtasks", countSubtasks);
 
-        Task task = new Task();
-        task.setTitle(taskRequest.getTask().getTitle());
-        task.setDescription(taskRequest.getTask().getDescription());
-        task.setCategory(taskRequest.getTask().getCategory());
-        task.setDateEnd(taskRequest.getTask().getDateEnd());
-        task.setImportance(taskRequest.getTask().getImportance());
-        task.setCreatedBy(userId);
+        Task savedTask = taskRepository.save(
+            Task.builder()
+                .title(taskRequest.getTask().getTitle())
+                .description(taskRequest.getTask().getDescription())
+                .category(taskRequest.getTask().getCategory())
+                .dateEnd(taskRequest.getTask().getDateEnd())
+                .importance(taskRequest.getTask().getImportance())
+                .createdBy(userId)
+            .build()
+        );
 
-        Task savedTask = taskRepository.save(task);
         log.debug("Starting linking a task: {} with {} subtasks", 
-            savedTask.getId(), taskRequest.getSubtasks().size());
-        taskRequest.getSubtasks().forEach(requestSubtask -> {
-            Subtask subtask = new Subtask();
-            subtask.setTitle(requestSubtask.getTitle());
-            subtask.setCompleted(requestSubtask.isCompleted());
-            subtask.setCreatedBy(userId);
-            subtask.setTask(savedTask);
-            savedTask.addSubtask(subtaskRepository.save(subtask));
-        });
+            savedTask.getId(), countSubtasks);
+
+        if(countSubtasks != 0L) {
+            taskRequest.getSubtasks().forEach(requestSubtask -> 
+                savedTask.addSubtask(subtaskRepository.save(
+                    Subtask.builder()
+                        .title(requestSubtask.getTitle())
+                        .isCompleted(requestSubtask.isCompleted())
+                        .createdBy(userId)
+                        .task(savedTask)
+                    .build()
+            )));
+        }
         Task createdTask = taskRepository.save(cacheService.updateTaskCompletionStatus(savedTask));
 
         log.info("Task: {} created successfully", createdTask.getId());
@@ -167,7 +174,7 @@ public class TaskService
         taskUpdate.setDateEnd(taskRequest.getDateEnd());
         taskUpdate.setImportance(taskRequest.getImportance());
         
-        Task task = taskRepository.save(cacheService.updateTaskCompletionStatus(taskUpdate));
+        Task task = taskRepository.save(taskUpdate);
 
         log.info("Update task: {} successfully", id);
         return task;

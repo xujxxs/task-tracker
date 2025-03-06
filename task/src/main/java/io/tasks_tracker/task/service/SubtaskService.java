@@ -63,20 +63,21 @@ public class SubtaskService
     ) throws NotFoundException, NoAccessException 
     {
         log.info("Starting create subtask");
-
-        Subtask newSubtask = new Subtask();
-        newSubtask.setTitle(subtask.getSubtask().getTitle());
-        newSubtask.setCompleted(subtask.getSubtask().isCompleted());
-        newSubtask.setCreatedBy(authenticationService.getUserId(authentication));
-
+        
         log.debug("Link subtask with task: {}", subtask.getTaskId());
         Task task = taskService.getTask( 
             authentication,
             subtask.getTaskId()
         );
-        newSubtask.setTask(task);
 
-        Subtask savedSubtask = subtaskRepository.save(newSubtask);
+        Subtask savedSubtask = subtaskRepository.save(
+            Subtask.builder()
+                .title(subtask.getSubtask().getTitle())
+                .isCompleted(subtask.getSubtask().isCompleted())
+                .createdBy(authenticationService.getUserId(authentication))
+                .task(task)
+            .build()
+        );
         task.addSubtask(savedSubtask);
     
         cacheService.updateTaskCompletionStatus(task);

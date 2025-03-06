@@ -19,11 +19,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Data;
 
 @Entity
 @Table
 @Data
+@Builder
 public class Task implements Serializable
 {
     @Id
@@ -46,6 +48,7 @@ public class Task implements Serializable
         orphanRemoval = true
     )
     @JsonManagedReference
+    @Builder.Default
     private List<Subtask> subtasks = new ArrayList<>();
     
     @Column(nullable = true)

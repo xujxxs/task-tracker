@@ -54,17 +54,18 @@ public class TaskProtoSerializer implements RedisSerializer<Task>
         }
         try {
             ProtoEntityTypes.Task proto = ProtoEntityTypes.Task.parseFrom(bytes);
-            Task task = new Task();
-            task.setId(proto.getId());
-            task.setTitle(proto.getTitle());
-            task.setDescription(proto.getDescription());
-            task.setCategory(proto.getCategory());
-            task.setDateEnd(proto.getDateEnd() != "" ? LocalDateTime.parse(proto.getDateEnd()) : null);
-            task.setImportance(proto.getImportance());
-            task.setCreatedBy(proto.getCreatedBy());
-            task.setCreatedAt(LocalDateTime.parse(proto.getCreatedAt()));
-            task.setRedactedAt(proto.getRedactedAt() != "" ? LocalDateTime.parse(proto.getRedactedAt()) : null);
-            task.setEndedAt(proto.getEndedAt() != "" ? LocalDateTime.parse(proto.getEndedAt()) : null);
+            Task task = Task.builder()
+                    .id(proto.getId())
+                    .title(proto.getTitle())
+                    .description(proto.getDescription())
+                    .category(proto.getCategory())
+                    .dateEnd(proto.getDateEnd() != "" ? LocalDateTime.parse(proto.getDateEnd()) : null)
+                    .importance(proto.getImportance())
+                    .createdBy(proto.getCreatedBy())
+                    .createdAt(LocalDateTime.parse(proto.getCreatedAt()))
+                    .redactedAt(proto.getRedactedAt() != "" ? LocalDateTime.parse(proto.getRedactedAt()) : null)
+                    .endedAt(proto.getEndedAt() != "" ? LocalDateTime.parse(proto.getEndedAt()) : null)
+                .build();
 
             proto.getSubtasksList().forEach(protoSubtask -> {
                 task.addSubtask(subtaskProtoSerializer.toSubtask(protoSubtask));

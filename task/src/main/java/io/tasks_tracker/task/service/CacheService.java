@@ -32,7 +32,7 @@ public class CacheService
     @Cacheable(value = "tasks", key = "#id")
     public Task getTaskById(Long id)
     {
-        log.debug("Fetching task: {} with cache", id);
+        log.debug("Task: {} not found in cache. Fetching in database", id);
         return taskRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Task", id));
     }
@@ -40,7 +40,7 @@ public class CacheService
     @Cacheable(value = "subtasks", key = "#id")
     public Subtask getSubtaskById(Long id)
     {
-        log.debug("Fetching subtasks: {} with cache", id);
+        log.debug("Subtask: {} not found in cache. Fetching in database", id);
         return subtaskRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Subtask", id));
     }
