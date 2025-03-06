@@ -34,8 +34,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RequestMapping("/api/tasks")
 public class TaskController 
 {
-    private AuthenticationService authenticationService;
-    private TaskService taskService;
+    private final AuthenticationService authenticationService;
+    private final TaskService taskService;
 
     public TaskController(
         AuthenticationService authenticationService,    
@@ -118,7 +118,7 @@ public class TaskController
         
         log.debug("Create task successfully, task id: {}", newTask.getId());
         return ResponseEntity
-                .created(URI.create("/tasks/" + newTask.getId().toString()))
+                .created(URI.create("/api/tasks/" + newTask.getId().toString()))
                 .body(newTask);
     }
     
